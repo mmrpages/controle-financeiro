@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Financeiro 2026 - Sky Edition</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+  <header>
+    <h1>Finanças 2026</h1>
+    <div class="toolbar">
+      <button class="btn btn-accent" onclick="addExpense()">+ Despesa</button>
+      <button class="btn" onclick="exportData()">Exportar</button>
+      <button class="btn" onclick="importData()">Importar</button>
+      <button class="btn" style="color:var(--danger)" onclick="resetAll()">Limpar Tudo</button>
+    </div>
+  </header>
+
+  <div class="table-card">
+    <div class="table-wrap">
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid-info">
+    <div class="card"><h4>Receita Anual</h4><div id="totalRenda" class="value">R$ 0,00</div></div>
+    <div class="card"><h4>Despesa Anual</h4><div id="totalGasto" class="value" style="color: var(--danger)">R$ 0,00</div></div>
+    <div class="card"><h4>Média Saldo</h4><div id="mediaSaldo" class="value" style="color: var(--success)">R$ 0,00</div></div>
+    <div class="card"><h4>Uso da Renda</h4><div id="mediaPerc" class="value">0%</div></div>
+  </div>
+</div>
+
+<div id="chartModal" class="modal">
+  <div class="modal-content">
+    <h2 id="modalTitle"></h2>
+    <div class="chart-container">
+      <canvas id="categoryChart"></canvas>
+    </div>
+    <p id="modalTotal"></p>
+    <button class="btn" style="width: 100%" onclick="closeModal()">Fechar</button>
+  </div>
+</div>
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCEhMZcmsklTArvDk2AMDg3Vm6RxzE2a8c",
+    authDomain: "mmrpages-controle-financeiro.firebaseapp.com",
+    projectId: "mmrpages-controle-financeiro",
+    storageBucket: "mmrpages-controle-financeiro.firebasestorage.app",
+    messagingSenderId: "415288375426",
+    appId: "1:415288375426:web:fd5e211ca0bc6324da9c9b",
+    measurementId: "G-MDXPQVG4ZC"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
