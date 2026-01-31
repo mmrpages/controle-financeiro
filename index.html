@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Financeiro 2026 - Sky Edition com Total Cartão</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #0ea5e9;
+            --accent-light: #e0f2fe;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            --card-sum-bg: #fdf2f2; /* Cor de destaque para o total de cartões */
+        }
+
+        /* ... (Mantendo os estilos anteriores) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: var(--accent-blue);
+            font-weight: 800;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .btn:hover {
+                background: #f8fafc;
+                transform: translateY(-1px);
+            }
+
+        .btn-accent {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+        }
+
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            min-width: 1300px;
+        }
+
+        .group-header {
+            background: var(--accent-light);
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 12px;
+            border-right: 2px solid white;
+            text-align: center;
+        }
+
+        th {
+            padding: 18px 12px;
+            background: #f8fafc;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: center;
+        }
+
+        .input {
+            background: #fcfdfe;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            width: 100px;
+            outline: none;
+        }
+
+            .input:focus {
+                border-color: var(--accent-blue);
+            }
+
+        .input-readonly {
+            border: none !important;
+            background: transparent !important;
+            font-weight: 700;
+            width: 110px;
+        }
+
+        .input-total-cartao {
+            color: var(--danger) !important;
+            background: var(--card-sum-bg) !important;
+            border: 1px solid #fee2e2 !important;
+        }
+
+        .month-label {
+            font-weight: 700;
+            color: var(--accent-blue);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+            .month-label:hover {
+                background: var(--accent-light);
+            }
+
+        .usage-wrapper {
+            width: 90px;
+            height: 18px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .usage-bar {
+            height: 100%;
+            background: var(--accent-blue);
+            transition: width 0.4s;
+        }
+
+            .usage-bar.warning {
+                background: var(--danger);
+            }
+
+        .usage-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: #1e293b;
+            pointer-events: none;
+        }
+
+        .grid-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+            .card h4 {
+                color: var(--text-muted);
+                font-size: 0.75rem;
+                margin-bottom: 6px;
+            }
+
+            .card .value {
+                font-size: 1.4rem;
+                font-weight: 800;
+            }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 35px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Finanças 2026</h1>
+            <div class="toolbar">
+                <button class="btn btn-accent" onclick="addExpense()">+ Despesa</button>
+                <button class="btn" onclick="exportData()">Exportar</button>
+                <button class="btn" onclick="importData()">Importar</button>
+                <button class="btn" style="color:var(--danger)" onclick="resetAll()">Limpar Tudo</button>
+            </div>
+        </header>
+
+        <div class="table-card">
+            <div class="table-wrap">
+                <table>
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid-info">
+            <div class="card"><h4>Receita Anual</h4><div id="totalRenda" class="value">R$ 0,00</div></div>
+            <div class="card"><h4>Despesa Anual</h4><div id="totalGasto" class="value" style="color: var(--danger)">R$ 0,00</div></div>
+            <div class="card"><h4>Média Saldo</h4><div id="mediaSaldo" class="value" style="color: var(--success)">R$ 0,00</div></div>
+            <div class="card"><h4>Uso da Renda</h4><div id="mediaPerc" class="value">0%</div></div>
+        </div>
+    </div>
+
+    <div id="chartModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="margin-bottom: 20px; color: var(--text-main); width: 100%;"></h2>
+            <div style="height: 280px; width: 100%; position: relative;"><canvas id="categoryChart"></canvas></div>
+            <p id="modalTotal" style="margin: 25px 0 15px 0; font-weight: 800; color: var(--accent-blue); font-size: 1.2rem;"></p>
+            <button class="btn" style="width: 100%" onclick="closeModal()">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'fin_v2026_sky_final';
+        const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const brFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+            categories: [
+                { id: 'c1', name: 'Aluguel', type: 'Moradia' },
+                { id: 'c2', name: 'Alimentação', type: 'Variável' }
+            ],
+            data: months.map(() => ({ income: 0, expenses: {} }))
+        };
+
+        function parseVal(v) {
+            if (!v) return 0;
+            return parseFloat(v.toString().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+        }
+
+        function save() {
+            state.categories.sort((a, b) => a.type.localeCompare(b.type));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            build();
+        }
+
+        function calculate() {
+            let tR = 0, tG = 0, mA = 0;
+            months.forEach((_, m) => {
+                const inc = parseVal(document.getElementById(`inc-${m}`).value);
+                state.data[m].income = inc;
+
+                let mG = 0;
+                let totalCartao = 0;
+
+                state.categories.forEach(c => {
+                    const val = parseVal(document.getElementById(`e-${m}-${c.id}`).value);
+                    state.data[m].expenses[c.id] = val;
+                    mG += val;
+
+                    // SOMA APENAS O GRUPO CARTÃO
+                    if (c.type === "Cartão") {
+                        totalCartao += val;
+                    }
+                });
+
+                // Atualiza o campo de Total Parcial de Cartões (se existir)
+                const cartaoField = document.getElementById(`total-cartao-${m}`);
+                if (cartaoField) cartaoField.value = brFormatter.format(totalCartao);
+
+                document.getElementById(`total-${m}`).value = brFormatter.format(mG);
+                document.getElementById(`saldo-${m}`).value = brFormatter.format(inc - mG);
+
+                const perc = inc > 0 ? (mG / inc) * 100 : 0;
+                const bar = document.getElementById(`bar-${m}`);
+                const label = document.getElementById(`label-${m}`);
+
+                if (bar) bar.style.width = Math.min(100, perc) + '%';
+                if (bar) bar.className = 'usage-bar ' + (perc > 85 ? 'warning' : '');
+                if (label) label.textContent = inc > 0 ? perc.toFixed(0) + '%' : '0%';
+                if (label) label.style.color = perc > 50 ? '#ffffff' : '#1e293b';
+
+                tR += inc; tG += mG; if (inc > 0 || mG > 0) mA++;
+            });
+
+            document.getElementById('totalRenda').textContent = brFormatter.format(tR);
+            document.getElementById('totalGasto').textContent = brFormatter.format(tG);
+            document.getElementById('mediaSaldo').textContent = brFormatter.format((tR - tG) / (mA || 1));
+            document.getElementById('mediaPerc').textContent = tR > 0 ? ((tG / tR) * 100).toFixed(1) + '%' : '0%';
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function build() {
+            const head = document.getElementById('tableHead');
+            const groups = {};
+            state.categories.forEach(c => groups[c.type] = (groups[c.type] || 0) + 1);
+
+            // Linha 1: Cabeçalhos de Grupo
+            let h1 = `<tr><th colspan="2" style="background:none; border:none"></th>`;
+            Object.keys(groups).forEach(type => {
+                let span = groups[type];
+                // Se for Cartão, adicionamos 1 no span para a coluna de total
+                if (type === "Cartão") span += 1;
+                h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
+            });
+            h1 += `<th colspan="3" style="background:none; border:none"></th></tr>`;
+
+            // Linha 2: Nomes das Colunas
+            let h2 = `<tr><th>Mês</th><th>Renda</th>`;
+            state.categories.forEach((c, index) => {
+                h2 += `<th>
+            <div style="font-weight:600; color:#334155; cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div>
+            <div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div>
+          </th>`;
+
+                // Inserir a coluna "Total Cartão" após o último item do grupo Cartão
+                const nextCat = state.categories[index + 1];
+                if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) {
+                    h2 += `<th style="background: var(--card-sum-bg); color: var(--danger)">Total Cartão</th>`;
+                }
+            });
+            h2 += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
+            head.innerHTML = h1 + h2;
+
+            const body = document.getElementById('tableBody');
+            body.innerHTML = months.map((n, m) => `
+          <tr>
+            <td><span class="month-label" onclick="openMonthChart(${m})">${n}</span></td>
+            <td><input id="inc-${m}" class="input" style="color:#7c3aed; font-weight:bold"
+                value="${state.data[m].income ? brFormatter.format(state.data[m].income) : ''}"
+                oninput="calculate()" onfocus="this.value=state.data[${m}].income||''"
+                onblur="this.value=state.data[${m}].income?brFormatter.format(state.data[${m}].income):''"></td>
+            ${state.categories.map((c, index) => {
+                let html = `<td><input id="e-${m}-${c.id}" class="input"
+                  value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}"
+                  oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''"
+                  onblur="this.value=state.data[${m}].expenses['${c.id}']?brFormatter.format(state.data[${m}].expenses['${c.id}']):''"></td>`;
+
+                const nextCat = state.categories[index + 1];
+                if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) {
+                    html += `<td><input id="total-cartao-${m}" class="input input-readonly input-total-cartao" readonly></td>`;
+                }
+                return html;
+            }).join('')}
+            <td><input id="total-${m}" class="input input-readonly" style="color:var(--danger)" readonly></td>
+            <td><input id="saldo-${m}" class="input input-readonly" style="color:var(--success)" readonly></td>
+            <td>
+              <div class="usage-wrapper">
+                <div class="usage-bar" id="bar-${m}"></div>
+                <div class="usage-text" id="label-${m}">0%</div>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+            calculate();
+        }
+
+        // ... (As demais funções de modal e botões permanecem iguais ao código anterior) ...
+        function addExpense() {
+            const name = prompt("Nome da despesa:"); if (!name) return;
+            const catMsg = PRESET_CATEGORIES.map((c, i) => `${i + 1}. ${c}`).join('\n');
+            const choice = prompt("Escolha a categoria (número):\n" + catMsg);
+            const type = PRESET_CATEGORIES[choice - 1] || "Outros";
+            state.categories.push({ id: 'ex_' + Date.now(), name, type });
+            save();
+        }
+        function editColumn(id) {
+            const cat = state.categories.find(c => c.id === id);
+            const newName = prompt("Novo nome:", cat.name);
+            if (newName) { cat.name = newName; save(); }
+        }
+        function deleteColumn(id) {
+            if (confirm("Excluir esta coluna?")) { state.categories = state.categories.filter(c => c.id !== id); save(); }
+        }
+        let myChart = null;
+        function openMonthChart(mIdx) {
+            const mData = state.data[mIdx];
+            const catTotals = {};
+            let total = 0;
+            state.categories.forEach(c => {
+                const v = mData.expenses[c.id] || 0;
+                if (v > 0) { catTotals[c.type] = (catTotals[c.type] || 0) + v; total += v; }
+            });
+            if (total === 0) return alert("Sem gastos em " + months[mIdx]);
+            document.getElementById('modalTitle').textContent = "Resumo: " + months[mIdx];
+            document.getElementById('modalTotal').textContent = "Total Gasto: " + brFormatter.format(total);
+            document.getElementById('chartModal').style.display = 'flex';
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(catTotals),
+                    datasets: [{
+                        data: Object.values(catTotals),
+                        backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#334155'],
+                        borderWidth: 4, borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', align: 'center', labels: { padding: 20, boxWidth: 12 } },
+                        tooltip: { callbacks: { label: (i) => ` ${i.label}: ${brFormatter.format(i.parsed)}` } }
+                    }
+                }
+            });
+        }
+        function closeModal() { document.getElementById('chartModal').style.display = 'none'; }
+        function exportData() {
+            const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `financeiro_2026.json`; a.click();
+        }
+        function importData() {
+            const input = document.createElement('input'); input.type = 'file';
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = ev => { state = JSON.parse(ev.target.result); save(); };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+        function resetAll() { if (confirm("Deseja apagar todos os dados?")) { localStorage.removeItem(STORAGE_KEY); location.reload(); } }
+        window.onclick = (e) => { if (e.target.id === 'chartModal') closeModal(); }
+        build();
+    </script>
+</body>
+</html>
