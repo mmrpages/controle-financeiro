@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Finanças 2026</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f4f8; }
+    .auth-card { background: white; padding: 40px; border-radius: 24px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; }
+    .auth-card h2 { color: var(--accent-blue); margin-bottom: 20px; font-weight: 800; }
+    .auth-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: 0.2s; }
+    .auth-input:focus { border-color: var(--accent-blue); }
+    .auth-btn { width: 100%; padding: 12px; margin-top: 20px; background: var(--accent-blue); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .auth-btn:hover { opacity: 0.9; }
+    .auth-toggle { margin-top: 20px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
+    .auth-toggle b { color: var(--accent-blue); }
+  </style>
+</head>
+<body>
+
+<div class="auth-card">
+  <h2 id="authTitle">Acessar Sistema</h2>
+  <input type="email" id="email" class="auth-input" placeholder="Seu e-mail">
+  <input type="password" id="password" class="auth-input" placeholder="Sua senha">
+  <button id="mainBtn" class="auth-btn" onclick="handleAuth()">Entrar</button>
+  <div class="auth-toggle" onclick="toggleMode()" id="toggleText">
+    Não tem conta? <b>Criar agora</b>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+  // SUAS CREDENCIAIS (Use as mesmas do index.html)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCEhMZcmsklTArvDk2AMDg3Vm6RxzE2a8c",
+    authDomain: "mmrpages-controle-financeiro.firebaseapp.com",
+    projectId: "mmrpages-controle-financeiro",
+    storageBucket: "mmrpages-controle-financeiro.firebasestorage.app",
+    messagingSenderId: "415288375426",
+    appId: "1:415288375426:web:fd5e211ca0bc6324da9c9b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  let isLogin = true;
+
+  window.toggleMode = () => {
+    isLogin = !isLogin;
+    document.getElementById('authTitle').innerText = isLogin ? "Acessar Sistema" : "Criar Conta";
+    document.getElementById('mainBtn').innerText = isLogin ? "Entrar" : "Cadastrar";
+    document.getElementById('toggleText').innerHTML = isLogin ? "Não tem conta? <b>Criar agora</b>" : "Já tem conta? <b>Fazer Login</b>";
+  };
+
+  window.handleAuth = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      window.location.href = 'index.html'; // Redireciona após sucesso
+    } catch (error) {
+      alert("Erro na autenticação: " + error.message);
+    }
+  };
+</script>
+</body>
+</html>

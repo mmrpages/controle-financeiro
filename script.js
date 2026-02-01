@@ -21,17 +21,24 @@ function parseVal(v) {
 }
 
 async function save() {
-  const user = window.auth.currentUser;
-  
-  if (user) {
-    // Se o usuário estiver logado, salva no banco de dados do Google
-    await window.firebase.firestore().collection("usuarios").doc(user.uid).set(state);
-    console.log("Dados salvos na nuvem!");
+  // Salva no localStorage primeiro para garantir que o usuário não perca nada
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  // Tenta salvar no Firebase se as chaves estiverem disponíveis
+  if (window.auth && window.auth.currentUser) {
+    try {
+      const user = window.auth.currentUser;
+      const { doc, setDoc } = window.fbOps;
+      await setDoc(doc(window.db, "usuarios", user.uid), state);
+      console.log("✅ Sincronizado com a nuvem.");
+    } catch (error) {
+      console.warn("⚠️ Erro na sincronização (verifique as regras do Firebase):", error);
+    }
   } else {
-    // Se não estiver logado, continua salvando no navegador
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    console.log("💾 Salvo apenas localmente.");
   }
-  build();
+  
+  build(); // Atualiza a tabela na tela
 }
 
 // --- CÁLCULOS ---
@@ -140,23 +147,35 @@ function build() {
 }
 
 // --- INTERAÇÕES ---
-function addExpense() {
-  const name = prompt("Nome da despesa:"); if (!name) return;
+
+async function addExpense() {
+  const name = prompt("Nome da despesa:"); 
+  if (!name) return;
+  
   const catMsg = PRESET_CATEGORIES.map((c, i) => `${i+1}. ${c}`).join('\n');
   const choice = prompt("Escolha a categoria (número):\n" + catMsg);
   const type = PRESET_CATEGORIES[choice - 1] || "Outros";
+  
   state.categories.push({ id: 'ex_' + Date.now(), name, type });
-  save();
+  
+  // Chamamos o save com await para lidar com a promessa do Firebase
+  await save();
 }
 
-function editColumn(id) {
+async function editColumn(id) {
   const cat = state.categories.find(c => c.id === id);
   const newName = prompt("Novo nome:", cat.name);
-  if (newName) { cat.name = newName; save(); }
+  if (newName) { 
+    cat.name = newName; 
+    await save(); 
+  }
 }
 
-function deleteColumn(id) {
-  if (confirm("Excluir esta coluna?")) { state.categories = state.categories.filter(c => c.id !== id); save(); }
+async function deleteColumn(id) {
+  if (confirm("Excluir esta coluna? Todos os dados vinculados a ela neste navegador serão perdidos.")) { 
+    state.categories = state.categories.filter(c => c.id !== id); 
+    await save(); 
+  }
 }
 
 // --- GRÁFICO ---
