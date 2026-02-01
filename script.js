@@ -1,5 +1,5 @@
 /**
- * SISTEMA FINANCEIRO 2026 - LOGICA ATUALIZADA
+ * SISTEMA FINANCEIRO 2026 - LOGICA ATUALIZADA E AJUSTADA
  */
 const STORAGE_KEY = 'fin_v2026_sky_final';
 const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
@@ -14,7 +14,7 @@ let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   data: months.map(() => ({ income: 0, expenses: {} }))
 };
 
-let currentEditId = null; // Controla se estamos editando ou adicionando no modal
+let currentEditId = null; 
 
 // --- INICIALIZAÇÃO E SINCRONIZAÇÃO ---
 
@@ -49,6 +49,7 @@ async function save() {
 function setupCategorySelect() {
   const select = document.getElementById('inputExpenseCategory');
   if (!select) return;
+  // Preenche o select com as categorias pré-definidas
   select.innerHTML = PRESET_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 }
 
@@ -84,7 +85,10 @@ async function processDataModal() {
   const name = document.getElementById('inputExpenseName').value.trim();
   const type = document.getElementById('inputExpenseCategory').value;
 
-  if (!name) return alert("Por favor, insira um nome para a despesa.");
+  if (!name) {
+    alert("Por favor, insira um nome para a despesa.");
+    return;
+  }
 
   if (currentEditId) {
     const cat = state.categories.find(c => c.id === currentEditId);
@@ -98,7 +102,7 @@ async function processDataModal() {
   await save();
 }
 
-// Funções chamadas pelos botões da interface
+// Funções chamadas pelos botões da interface para abrir o modal em vez do prompt
 function addExpense() { openDataModal(); }
 function editColumn(id) { openDataModal(id); }
 
@@ -183,4 +187,56 @@ function build() {
           oninput="calculate()" onfocus="this.value=state.data[${m}].income||''" 
           onblur="save()"></td>
       ${state.categories.map((c, index) => {
-        let html = `<td><input id
+        let html = `<td><input id="e-${m}-${c.id}" class="input" 
+            value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" 
+            oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''" 
+            onblur="save()"></td>`;
+        const nextCat = state.categories[index + 1];
+        if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) {
+          html += `<td><input id="total-cartao-${m}" class="input input-readonly input-total-cartao" readonly></td>`;
+        }
+        return html;
+      }).join('')}
+      <td><input id="total-${m}" class="input input-readonly" style="color:var(--danger)" readonly></td>
+      <td><input id="saldo-${m}" class="input input-readonly" style="color:var(--success)" readonly></td>
+      <td>
+        <div class="usage-wrapper">
+          <div class="usage-bar" id="bar-${m}"></div>
+          <div class="usage-text" id="label-${m}">0%</div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  calculate();
+}
+
+// --- OUTRAS AÇÕES ---
+
+async function deleteColumn(id) {
+  if (confirm("Deseja realmente excluir esta coluna de despesa?")) { 
+    state.categories = state.categories.filter(c => c.id !== id); 
+    await save(); 
+  }
+}
+
+async function resetAll() {
+  if (confirm("ATENÇÃO: Isso apagará TODOS os seus dados salvos neste navegador e na nuvem. Deseja continuar?")) {
+    state = {
+      categories: [
+        { id: 'c1', name: 'Aluguel', type: 'Moradia' },
+        { id: 'c2', name: 'Alimentação', type: 'Variável' }
+      ],
+      data: months.map(() => ({ income: 0, expenses: {} }))
+    };
+    localStorage.removeItem(STORAGE_KEY);
+    if (window.auth && window.auth.currentUser) {
+      const { doc, setDoc } = window.fbOps;
+      await setDoc(doc(window.db, "usuarios", window.auth.currentUser.uid), state);
+    }
+    build();
+    alert("Sistema reiniciado com sucesso!");
+  }
+}
+
+// Inicializa a tabela ao carregar
+build();
