@@ -1,6 +1,3 @@
-/**
- * SISTEMA FINANCEIRO 2026 - LOGICA CORE
- */
 const STORAGE_KEY = 'fin_v2026_sky_final';
 const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
 const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -14,34 +11,33 @@ let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   data: months.map(() => ({ income: 0, expenses: {} }))
 };
 
-// --- UTILITÁRIOS ---
+// Permite que o Firebase atualize o estado ao carregar
+window.updateStateFromFirebase = (newData) => {
+  state = newData;
+  build();
+};
+
 function parseVal(v) {
   if (!v) return 0;
   return parseFloat(v.toString().replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 }
 
 async function save() {
-  // Salva no localStorage primeiro para garantir que o usuário não perca nada
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-  // Tenta salvar no Firebase se as chaves estiverem disponíveis
+  
   if (window.auth && window.auth.currentUser) {
     try {
       const user = window.auth.currentUser;
       const { doc, setDoc } = window.fbOps;
       await setDoc(doc(window.db, "usuarios", user.uid), state);
-      console.log("✅ Sincronizado com a nuvem.");
-    } catch (error) {
-      console.warn("⚠️ Erro na sincronização (verifique as regras do Firebase):", error);
+      console.log("✅ Sincronizado com Firebase");
+    } catch (e) {
+      console.error("❌ Erro ao salvar na nuvem:", e);
     }
-  } else {
-    console.log("💾 Salvo apenas localmente.");
   }
-  
-  build(); // Atualiza a tabela na tela
+  build();
 }
 
-// --- CÁLCULOS ---
 function calculate() {
   let tR = 0, tG = 0, mA = 0;
   months.forEach((_, m) => {
@@ -58,8 +54,8 @@ function calculate() {
       if (c.type === "Cartão") totalCartao += val;
     });
 
-    const cartaoField = document.getElementById(`total-cartao-${m}`);
-    if (cartaoField) cartaoField.value = brFormatter.format(totalCartao);
+    if (document.getElementById(`total-cartao-${m}`)) 
+      document.getElementById(`total-cartao-${m}`).value = brFormatter.format(totalCartao);
 
     document.getElementById(`total-${m}`).value = brFormatter.format(mG);
     document.getElementById(`saldo-${m}`).value = brFormatter.format(inc - mG);
@@ -68,14 +64,8 @@ function calculate() {
     const bar = document.getElementById(`bar-${m}`);
     const label = document.getElementById(`label-${m}`);
     
-    if(bar) {
-      bar.style.width = Math.min(100, perc) + '%';
-      bar.className = 'usage-bar ' + (perc > 85 ? 'warning' : '');
-    }
-    if(label) {
-      label.textContent = inc > 0 ? perc.toFixed(0) + '%' : '0%';
-      label.style.color = perc > 50 ? '#ffffff' : '#1e293b';
-    }
+    if(bar) bar.style.width = Math.min(100, perc) + '%';
+    if(label) label.textContent = perc.toFixed(0) + '%';
 
     tR += inc; tG += mG; if(inc > 0 || mG > 0) mA++;
   });
@@ -86,9 +76,10 @@ function calculate() {
   document.getElementById('mediaPerc').textContent = tR > 0 ? ((tG / tR) * 100).toFixed(1) + '%' : '0%';
 }
 
-// --- RENDERIZAÇÃO ---
 function build() {
   const head = document.getElementById('tableHead');
+  if(!head) return;
+
   const groups = {};
   state.categories.forEach(c => groups[c.type] = (groups[c.type] || 0) + 1);
 
@@ -98,12 +89,12 @@ function build() {
     if (type === "Cartão") span += 1; 
     h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
   });
-  h1 += `<th colspan="3" style="background:none; border:none"></th></tr>`;
+  h1 += `</tr>`;
 
   let h2 = `<tr><th>Mês</th><th>Renda</th>`;
   state.categories.forEach((c, index) => {
     h2 += `<th>
-      <div style="font-weight:600; color:#334155; cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div>
+      <div style="font-weight:600; cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div>
       <div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div>
     </th>`;
     const nextCat = state.categories[index + 1];
@@ -121,12 +112,12 @@ function build() {
       <td><input id="inc-${m}" class="input" style="color:#7c3aed; font-weight:bold" 
           value="${state.data[m].income ? brFormatter.format(state.data[m].income) : ''}" 
           oninput="calculate()" onfocus="this.value=state.data[${m}].income||''" 
-          onblur="this.value=state.data[${m}].income?brFormatter.format(state.data[${m}].income):''"></td>
+          onblur="save()"></td>
       ${state.categories.map((c, index) => {
         let html = `<td><input id="e-${m}-${c.id}" class="input" 
             value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" 
             oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''" 
-            onblur="this.value=state.data[${m}].expenses['${c.id}']?brFormatter.format(state.data[${m}].expenses['${c.id}']):''"></td>`;
+            onblur="save()"></td>`;
         const nextCat = state.categories[index + 1];
         if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) {
           html += `<td><input id="total-cartao-${m}" class="input input-readonly input-total-cartao" readonly></td>`;
@@ -146,99 +137,27 @@ function build() {
   calculate();
 }
 
-// --- INTERAÇÕES ---
-
 async function addExpense() {
   const name = prompt("Nome da despesa:"); 
   if (!name) return;
-  
-  const catMsg = PRESET_CATEGORIES.map((c, i) => `${i+1}. ${c}`).join('\n');
-  const choice = prompt("Escolha a categoria (número):\n" + catMsg);
+  const choice = prompt("Categoria:\n1.Fixa 2.Variável 3.Lazer 4.Saúde 5.Moradia 6.Transporte 7.Cartão 8.Outros");
   const type = PRESET_CATEGORIES[choice - 1] || "Outros";
-  
   state.categories.push({ id: 'ex_' + Date.now(), name, type });
-  
-  // Chamamos o save com await para lidar com a promessa do Firebase
   await save();
 }
 
 async function editColumn(id) {
   const cat = state.categories.find(c => c.id === id);
   const newName = prompt("Novo nome:", cat.name);
-  if (newName) { 
-    cat.name = newName; 
-    await save(); 
-  }
+  if (newName) { cat.name = newName; await save(); }
 }
 
 async function deleteColumn(id) {
-  if (confirm("Excluir esta coluna? Todos os dados vinculados a ela neste navegador serão perdidos.")) { 
+  if (confirm("Excluir coluna?")) { 
     state.categories = state.categories.filter(c => c.id !== id); 
     await save(); 
   }
 }
 
-// --- GRÁFICO ---
-let myChart = null;
-function openMonthChart(mIdx) {
-  const mData = state.data[mIdx];
-  const catTotals = {};
-  let total = 0;
-  state.categories.forEach(c => {
-    const v = mData.expenses[c.id] || 0;
-    if(v > 0) { catTotals[c.type] = (catTotals[c.type] || 0) + v; total += v; }
-  });
-  if(total === 0) return alert("Sem gastos registrados em " + months[mIdx]);
-
-  document.getElementById('modalTitle').textContent = "Resumo: " + months[mIdx];
-  document.getElementById('modalTotal').textContent = "Total Gasto: " + brFormatter.format(total);
-  document.getElementById('chartModal').style.display = 'flex';
-
-  const ctx = document.getElementById('categoryChart').getContext('2d');
-  if(myChart) myChart.destroy();
-  myChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(catTotals),
-      datasets: [{
-        data: Object.values(catTotals),
-        backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#334155'],
-        borderWidth: 4, borderColor: '#ffffff'
-      }]
-    },
-    options: { 
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { 
-        legend: { position: 'bottom', align: 'center', labels: { padding: 20, boxWidth: 12 } },
-        tooltip: { callbacks: { label: (i) => ` ${i.label}: ${brFormatter.format(i.parsed)}` } }
-      } 
-    }
-  });
-}
-
-function closeModal() { document.getElementById('chartModal').style.display = 'none'; }
-
-// --- DADOS ---
-function exportData() {
-  const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `financeiro_2026.json`; a.click();
-}
-
-function importData() {
-  const input = document.createElement('input'); input.type = 'file';
-  input.onchange = e => {
-    const reader = new FileReader();
-    reader.onload = ev => { state = JSON.parse(ev.target.result); save(); };
-    reader.readAsText(e.target.files[0]);
-  };
-  input.click();
-}
-
-function resetAll() { if(confirm("Deseja apagar todos os dados definitivamente?")) { localStorage.removeItem(STORAGE_KEY); location.reload(); } }
-
-window.onclick = (e) => { if(e.target.id === 'chartModal') closeModal(); }
-
-// Inicialização
+// Inicializa a tabela
 build();
