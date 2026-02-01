@@ -120,32 +120,24 @@ function openMonthChart(m) {
           legend: { 
             position: 'bottom',
             labels: {
-              // Adiciona o valor formatado na legenda abaixo do gráfico
+              // Esta parte adiciona o valor em R$ na legenda de cores abaixo do gráfico
               generateLabels: (chart) => {
                 const data = chart.data;
-                if (data.labels.length && data.datasets.length) {
-                  return data.labels.map((label, i) => {
-                    const value = data.datasets[0].data[i];
-                    return {
-                      text: `${label}: ${brFormatter.format(value)}`,
-                      fillStyle: data.datasets[0].backgroundColor[i],
-                      index: i
-                    };
-                  });
-                }
-                return [];
+                return data.labels.map((label, i) => ({
+                  text: `${label}: ${brFormatter.format(data.datasets[0].data[i])}`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  index: i
+                }));
               }
             }
           },
           tooltip: {
             callbacks: {
-              // Formata o valor que aparece quando você passa o mouse
+              // Esta parte formata o valor que aparece no balão preto ao passar o mouse
               label: function(context) {
                 let label = context.label || '';
                 if (label) label += ': ';
-                if (context.parsed !== null) {
-                  label += brFormatter.format(context.parsed);
-                }
+                label += brFormatter.format(context.parsed);
                 return label;
               }
             }
