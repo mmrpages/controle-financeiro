@@ -1,5 +1,5 @@
 /**
- * SISTEMA FINANCEIRO 2026 - LOGICA CONSOLIDADA
+ * SISTEMA FINANCEIRO 2026 - LOGICA CONSOLIDADA COM MOEDA NO GRÁFICO
  */
 const STORAGE_KEY = 'fin_v2026_sky_final';
 const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
@@ -15,10 +15,9 @@ let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
 };
 
 let currentEditId = null; 
-let myChart = null; // Instância global do gráfico
+let myChart = null; 
 
 // --- SINCRONIZAÇÃO ---
-
 window.updateStateFromFirebase = (newData) => {
   state = newData;
   build();
@@ -39,7 +38,6 @@ async function save() {
 }
 
 // --- MODAIS ---
-
 function setupCategorySelect() {
   const select = document.getElementById('inputExpenseCategory');
   if (select) select.innerHTML = PRESET_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
@@ -98,7 +96,7 @@ function openMonthChart(m) {
   });
 
   const total = Object.values(catTotals).reduce((a, b) => a + b, 0);
-  document.getElementById('modalTotal').innerText = total > 0 ? `Total: ${brFormatter.format(total)}` : "Sem gastos registrados.";
+  document.getElementById('modalTotal').innerText = total > 0 ? `Total: ${brFormatter.format(total)}` : "Sem gastos.";
 
   if (myChart) myChart.destroy();
   if (total > 0) {
@@ -109,8 +107,7 @@ function openMonthChart(m) {
         datasets: [{
           data: Object.values(catTotals),
           backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#334155'],
-          borderWidth: 2, 
-          borderColor: '#ffffff'
+          borderWidth: 2, borderColor: '#ffffff'
         }]
       },
       options: { 
@@ -120,7 +117,6 @@ function openMonthChart(m) {
           legend: { 
             position: 'bottom',
             labels: {
-              // Esta parte adiciona o valor em R$ na legenda de cores abaixo do gráfico
               generateLabels: (chart) => {
                 const data = chart.data;
                 return data.labels.map((label, i) => ({
@@ -133,13 +129,7 @@ function openMonthChart(m) {
           },
           tooltip: {
             callbacks: {
-              // Esta parte formata o valor que aparece no balão preto ao passar o mouse
-              label: function(context) {
-                let label = context.label || '';
-                if (label) label += ': ';
-                label += brFormatter.format(context.parsed);
-                return label;
-              }
+              label: (context) => ` ${context.label}: ${brFormatter.format(context.parsed)}`
             }
           }
         } 
@@ -150,8 +140,7 @@ function openMonthChart(m) {
 
 function closeModal() { document.getElementById('chartModal').style.display = 'none'; }
 
-// --- CÁLCULOS E TABELA ---
-
+// --- TABELA ---
 function calculate() {
   let tR = 0, tG = 0, mA = 0;
   months.forEach((_, m) => {
@@ -184,19 +173,19 @@ function build() {
   if(!head) return;
   const groups = {};
   state.categories.forEach(c => groups[c.type] = (groups[c.type] || 0) + 1);
-  let h1 = `<tr><th colspan="2" style="background:none; border:none"></th>`;
+  let h = `<tr><th colspan="2" style="background:none; border:none"></th>`;
   Object.keys(groups).forEach(type => {
     let span = groups[type]; if (type === "Cartão") span += 1; 
-    h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
+    h += `<th colspan="${span}" class="group-header">${type}</th>`;
   });
-  h1 += `</tr><tr><th>Mês</th><th>Renda</th>`;
+  h += `</tr><tr><th>Mês</th><th>Renda</th>`;
   state.categories.forEach((c, index) => {
-    h1 += `<th><div style="cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div><div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
+    h += `<th><div style="cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div><div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
     const nextCat = state.categories[index + 1];
-    if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) h1 += `<th style="background: var(--card-sum-bg); color: var(--danger)">Total Cartão</th>`;
+    if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) h += `<th style="background: var(--card-sum-bg); color: var(--danger)">Total Cartão</th>`;
   });
-  h1 += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
-  head.innerHTML = h1;
+  h += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
+  head.innerHTML = h;
 
   document.getElementById('tableBody').innerHTML = months.map((n, m) => `
     <tr>
@@ -218,6 +207,6 @@ function build() {
 function addExpense() { openDataModal(); }
 function editColumn(id) { openDataModal(id); }
 async function deleteColumn(id) { if (confirm("Excluir coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } }
-async function resetAll() { if (confirm("Resetar tudo?")) { state.categories = [{ id: 'c1', name: 'Aluguel', type: 'Moradia' }, { id: 'c2', name: 'Alimentação', type: 'Variável' }]; state.data = months.map(() => ({ income: 0, expenses: {} })); localStorage.removeItem(STORAGE_KEY); await save(); } }
+async function resetAll() { if (confirm("Resetar tudo na nuvem e local?")) { state.categories = [{ id: 'c1', name: 'Aluguel', type: 'Moradia' }, { id: 'c2', name: 'Alimentação', type: 'Variável' }]; state.data = months.map(() => ({ income: 0, expenses: {} })); localStorage.removeItem(STORAGE_KEY); await save(); } }
 
 build();
