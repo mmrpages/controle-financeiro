@@ -159,5 +159,41 @@ async function deleteColumn(id) {
   }
 }
 
+async function resetAll() {
+  if (confirm("ATENÇÃO: Isso apagará TODOS os seus dados salvos neste navegador e na nuvem. Deseja continuar?")) {
+    
+    // 1. Resetar o estado para o padrão inicial
+    state = {
+      categories: [
+        { id: 'c1', name: 'Aluguel', type: 'Moradia' },
+        { id: 'c2', name: 'Alimentação', type: 'Variável' }
+      ],
+      data: months.map(() => ({ income: 0, expenses: {} }))
+    };
+
+    // 2. Limpar o rastro no navegador local
+    localStorage.removeItem(STORAGE_KEY);
+
+    // 3. Sincronizar o "vazio" com o Firebase (se estiver logado)
+    if (window.auth && window.auth.currentUser) {
+      try {
+        const user = window.auth.currentUser;
+        const { doc, setDoc } = window.fbOps; // Usa as operações exportadas no index.html
+        
+        // Sobrescreve o documento do usuário com o estado inicial limpo
+        await setDoc(doc(window.db, "usuarios", user.uid), state);
+        console.log("✅ Banco de dados resetado na nuvem.");
+      } catch (e) {
+        console.error("❌ Erro ao resetar na nuvem:", e);
+        alert("Erro ao limpar dados na nuvem, mas os locais foram removidos.");
+      }
+    }
+
+    // 4. Reconstruir a interface com os dados limpos
+    build();
+    alert("Sistema reiniciado com sucesso!");
+  }
+}
+
 // Inicializa a tabela
 build();
