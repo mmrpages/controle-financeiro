@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
 <div class="container" style="display: none;"> 
@@ -42,10 +41,10 @@
 <div id="chartModal" class="modal">
   <div class="modal-content">
     <h2 id="modalTitle"></h2>
-    <div class="chart-container">
+    <div class="chart-container" style="position: relative; height:300px; width:100%">
       <canvas id="categoryChart"></canvas>
     </div>
-    <p id="modalTotal"></p>
+    <p id="modalTotal" style="font-weight: bold; margin-top: 15px;"></p>
     <button class="btn" style="width: 100%" onclick="closeModal()">Fechar</button>
   </div>
 </div>
@@ -58,8 +57,7 @@
       <input type="text" id="inputExpenseName" class="input" style="width:100%; text-align:left; margin-bottom:15px;" placeholder="Ex: Internet">
       
       <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Categoria</label>
-      <select id="inputExpenseCategory" class="input" style="width:100%; text-align:left; cursor:pointer;">
-        </select>
+      <select id="inputExpenseCategory" class="input" style="width:100%; text-align:left; cursor:pointer;"></select>
     </div>
     <div style="display: flex; gap: 10px; width: 100%;">
       <button class="btn" style="flex: 1;" onclick="closeDataModal()">Cancelar</button>
@@ -69,7 +67,6 @@
 </div>
 
 <script type="module">
-  // Importações do Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
@@ -83,19 +80,15 @@
     appId: "1:415288375426:web:fd5e211ca0bc6324da9c9b"
   };
 
-  // Inicialização
   const app = initializeApp(firebaseConfig);
   window.auth = getAuth(app);
   window.db = getFirestore(app);
-  window.fbOps = { doc, setDoc, getDoc }; // Exporta para o script.js usar
+  window.fbOps = { doc, setDoc, getDoc };
 
-  // Verificação de Autenticação e Redirecionamento
   onAuthStateChanged(window.auth, (user) => {
     if (!user) {
-      // Se não houver usuário, volta para o login
       window.location.href = 'login.html';
     } else {
-      // Se estiver logado, mostra o conteúdo e carrega dados
       document.querySelector('.container').style.display = 'block';
       window.logout = () => signOut(window.auth).then(() => window.location.href = 'login.html');
       loadUserData(user.uid);
@@ -106,11 +99,10 @@
     const docRef = doc(window.db, "usuarios", uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      window.updateStateFromFirebase(docSnap.data()); // Sincroniza script.js com a nuvem
+      window.updateStateFromFirebase(docSnap.data());
     }
   }
 </script>
-
 <script src="script.js" defer></script>
 </body>
 </html>
