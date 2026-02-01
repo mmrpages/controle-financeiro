@@ -49,6 +49,24 @@
   </div>
 </div>
 
+<div id="dataModal" class="modal">
+  <div class="modal-content">
+    <h2 id="dataModalTitle">Nova Despesa</h2>
+    <div style="width: 100%; text-align: left; margin: 20px 0;">
+      <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Nome da Despesa</label>
+      <input type="text" id="inputExpenseName" class="auth-input" style="width:100%;" placeholder="Ex: Internet">
+      
+      <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin: 15px 0 5px 0;">Categoria</label>
+      <select id="inputExpenseCategory" class="auth-input" style="width:100%; cursor:pointer; background: #fff;">
+        </select>
+    </div>
+    <div style="display: flex; gap: 10px; width: 100%;">
+      <button class="btn" style="flex: 1;" onclick="closeDataModal()">Cancelar</button>
+      <button class="btn btn-accent" style="flex: 1;" id="btnSaveData">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
