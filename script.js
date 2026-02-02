@@ -111,21 +111,22 @@ function closeTotalsModal() {
 }
 
 // --- GRÁFICOS ---
+
 function openMonthChart(m) {
   const modal = document.getElementById('chartModal');
   const canvas = document.getElementById('categoryChart');
   if (!canvas) return;
   
   modal.style.display = 'flex';
-  document.getElementById('modalTitle').innerText = `Resumo por Categoria: ${months[m]}`;
+  document.getElementById('modalTitle').innerText = `Resumo por Categorias: ${months[m]}`;
 
-  // Consolidação por TIPO (Ex: Fixa, Variável...)
+  // Consolidação: Agrupar por TIPO de categoria (ex: Fixa, Variável, etc)
   const consolidatedTotals = {};
   
   state.categories.forEach(c => {
     const val = state.data[m].expenses[c.id] || 0;
     if (val > 0) {
-      // Agrupa pelo TIPO da categoria, não pelo nome individual
+      // Se já existe esse tipo (ex: Moradia), soma. Se não, inicia com o valor.
       consolidatedTotals[c.type] = (consolidatedTotals[c.type] || 0) + val;
     }
   });
@@ -135,7 +136,7 @@ function openMonthChart(m) {
   const totalGeral = values.reduce((a, b) => a + b, 0);
 
   document.getElementById('modalTotal').innerText = totalGeral > 0 
-    ? `Total do Mês: ${brFormatter.format(totalGeral)}` 
+    ? `Total: ${brFormatter.format(totalGeral)}` 
     : "Sem gastos registrados.";
 
   if (myChart) myChart.destroy();
@@ -144,7 +145,7 @@ function openMonthChart(m) {
     myChart = new Chart(canvas.getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: labels,
+        labels: labels, // Exibirá "Moradia", "Variável", etc.
         datasets: [{
           data: values,
           backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#334155'],
@@ -162,9 +163,8 @@ function openMonthChart(m) {
               generateLabels: (chart) => {
                 return chart.data.labels.map((label, i) => {
                   const val = chart.data.datasets[0].data[i];
-                  const perc = ((val / totalGeral) * 100).toFixed(1);
                   return {
-                    text: `${label}: ${brFormatter.format(val)} (${perc}%)`,
+                    text: `${label}: ${brFormatter.format(val)}`,
                     fillStyle: chart.data.datasets[0].backgroundColor[i],
                     index: i
                   };
@@ -174,11 +174,7 @@ function openMonthChart(m) {
           },
           tooltip: {
             callbacks: {
-              label: (ctx) => {
-                const val = ctx.parsed;
-                const perc = ((val / totalGeral) * 100).toFixed(1);
-                return ` ${ctx.label}: ${brFormatter.format(val)} (${perc}%)`;
-              }
+              label: (ctx) => ` ${ctx.label}: ${brFormatter.format(ctx.parsed)}`
             }
           }
         }
@@ -186,6 +182,7 @@ function openMonthChart(m) {
     });
   }
 }
+
 function closeModal() { document.getElementById('chartModal').style.display = 'none'; }
 
 // --- CÁLCULOS E CONSTRUÇÃO DA TABELA ---
