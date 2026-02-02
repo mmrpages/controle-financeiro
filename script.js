@@ -38,33 +38,55 @@ async function save() {
   build();
 }
 
-// --- GESTÃO DE GRUPOS ---
+// --- GESTÃO DE GRUPOS (NOVO) ---
 
-/** Permite adicionar um novo tipo de grupo (ex: Investimentos) */
-function addNewPreset() {
-  const name = prompt("Nome do novo grupo:");
+window.openSettingsModal = () => {
+  const modal = document.getElementById('settingsModal');
+  const list = document.getElementById('presetsList');
+  
+  // Renderiza a lista de grupos atuais com botão de excluir
+  list.innerHTML = state.presets.map(p => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee; color: #333;">
+      <span>${p}</span>
+      <button onclick="removePreset('${p}')" style="background:none; border:none; color:red; cursor:pointer; font-size: 1.2rem;">🗑️</button>
+    </div>
+  `).join('');
+  
+  modal.style.display = 'flex';
+};
+
+window.closeSettingsModal = () => {
+  document.getElementById('settingsModal').style.display = 'none';
+  build();
+};
+
+window.addNewPreset = async () => {
+  const input = document.getElementById('newPresetName');
+  const name = input.value.trim();
+  
   if (name && !state.presets.includes(name)) {
     state.presets.push(name);
-    save();
-    return name;
+    input.value = "";
+    await save();
+    openSettingsModal(); 
   }
-  return null;
-}
+};
 
-/** Permite remover um grupo se ele não estiver a ser usado por nenhuma despesa */
-function removePreset(type) {
+window.removePreset = async (type) => {
   const inUse = state.categories.some(c => c.type === type);
   if (inUse) {
-    alert("Não pode apagar um grupo que possui despesas ativas!");
+    alert(`O grupo "${type}" está em uso. Mude as despesas de grupo antes de o excluir.`);
     return;
   }
-  if (confirm(`Remover o grupo "${type}" da lista?`)) {
+  
+  if (confirm(`Deseja apagar o grupo "${type}"?`)) {
     state.presets = state.presets.filter(p => p !== type);
-    save();
+    await save();
+    openSettingsModal();
   }
-}
+};
 
-// --- MODAL DE DADOS ---
+// --- MODAL DE DESPESAS ---
 
 function openDataModal(id = null) {
   currentEditId = id;
@@ -72,9 +94,8 @@ function openDataModal(id = null) {
   const select = document.getElementById('inputExpenseCategory');
   const inputName = document.getElementById('inputExpenseName');
   
-  // Gera a lista de opções com base nos grupos dinâmicos
-  const options = state.presets.map(p => `<option value="${p}">${p}</option>`).join('');
-  select.innerHTML = options + `<option value="NEW_GROUP" style="color:blue">+ Adicionar Novo Grupo...</option>`;
+  // Popula o select com os grupos do state
+  select.innerHTML = state.presets.map(p => `<option value="${p}">${p}</option>`).join('');
 
   if (id) {
     const cat = state.categories.find(c => c.id === id);
@@ -87,26 +108,19 @@ function openDataModal(id = null) {
   modal.style.display = 'flex';
 
   document.getElementById('btnSaveData').onclick = async () => {
-    let type = select.value;
     const name = inputName.value.trim();
-
-    if (type === "NEW_GROUP") {
-      const added = addNewPreset();
-      if (!added) return;
-      type = added;
-    }
+    const type = select.value;
 
     if (!name) return;
 
     if (currentEditId) {
       const cat = state.categories.find(c => c.id === currentEditId);
-      cat.name = name; 
-      cat.type = type;
+      cat.name = name; cat.type = type;
     } else {
       state.categories.push({ id: 'ex_' + Date.now(), name, type });
     }
     
-    modal.style.display = 'none';
+    closeDataModal();
     await save();
   };
 }
@@ -148,7 +162,6 @@ function build() {
   const head = document.getElementById('tableHead');
   if(!head) return;
 
-  // Ordena para manter os grupos juntos na tabela
   state.categories.sort((a, b) => a.type.localeCompare(b.type));
 
   const groups = {};
@@ -157,12 +170,12 @@ function build() {
   let h1 = `<tr><th colspan="2" style="border:none"></th>`;
   Object.keys(groups).forEach(type => {
     let span = groups[type] + (state.settings.showTotals[type] ? 1 : 0);
-    h1 += `<th colspan="${span}" class="group-header" onclick="removePreset('${type}')" title="Clique para apagar grupo vazio">${type}</th>`;
+    h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
   });
   h1 += `</tr><tr><th>Mês</th><th>Renda</th>`;
 
   state.categories.forEach((c, index) => {
-    h1 += `<th><div onclick="editColumn('${c.id}')">${c.name}</div><div class="delete-btn" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
+    h1 += `<th><div onclick="editColumn('${c.id}')" style="cursor:pointer">${c.name}</div><div class="delete-btn" onclick="deleteColumn('${c.id}')" style="font-size:9px; color:red; cursor:pointer">Excluir</div></th>`;
     const next = state.categories[index + 1];
     if ((!next || next.type !== c.type) && state.settings.showTotals[c.type]) {
       h1 += `<th class="total-col">Total ${c.type}</th>`;
@@ -191,9 +204,10 @@ function build() {
 }
 
 // Funções de Modal e UI
-function addExpense() { openDataModal(); }
-function editColumn(id) { openDataModal(id); }
-async function deleteColumn(id) { if (confirm("Excluir esta coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } }
-async function resetAll() { if (confirm("Limpar todos os dados?")) { state.categories = []; state.presets = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"]; state.data = months.map(() => ({ income: 0, expenses: {} })); await save(); } }
+window.closeDataModal = () => { document.getElementById('dataModal').style.display = 'none'; };
+window.addExpense = () => { openDataModal(); };
+window.editColumn = (id) => { openDataModal(id); };
+window.deleteColumn = async (id) => { if (confirm("Excluir esta coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } };
+window.resetAll = async () => { if (confirm("Limpar todos os dados?")) { state.categories = []; state.presets = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"]; state.data = months.map(() => ({ income: 0, expenses: {} })); await save(); } };
 
 build();
