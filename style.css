@@ -53,15 +53,38 @@ td { padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: center; }
 .month-label:hover { background: var(--accent-light); }
 
 .usage-wrapper { 
-  width: 90px; height: 18px; background: #e2e8f0; border-radius: 10px; 
-  overflow: hidden; margin: 0 auto; position: relative; border: 1px solid var(--border);
+  width: 90px; 
+  height: 18px; 
+  background: #e2e8f0; 
+  border-radius: 10px; 
+  overflow: hidden; 
+  margin: 0 auto; 
+  position: relative; 
+  border: 1px solid var(--border);
 }
-.usage-bar { height: 100%; background: var(--accent-blue); transition: width 0.4s; }
+
+.usage-bar { 
+  height: 100%; 
+  background: var(--accent-blue); 
+  width: 0%; /* O JS controlará isso */
+  transition: width 0.4s ease-in-out; 
+}
+
 .usage-bar.warning { background: var(--danger); }
+
 .usage-text {
   position: absolute; width: 100%; height: 100%; top: 0; left: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 800; color: #1e293b; pointer-events: none;
+}
+
+.input-readonly { 
+  border: none !important; 
+  background: transparent !important; 
+  font-weight: 700; 
+  width: 110px; 
+  text-align: center;
+  color: var(--text-main);
 }
 
 .grid-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
