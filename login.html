@@ -30,19 +30,13 @@
 </div>
 
 <script type="module">
+  // 1. Importa a configuração do ficheiro externo
+  import firebaseConfig from './config.js'; 
+  
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-  // SUAS CREDENCIAIS (Use as mesmas do index.html)
-  const firebaseConfig = {
-    apiKey: "AIzaSyCEhMZcmsklTArvDk2AMDg3Vm6RxzE2a8c",
-    authDomain: "mmrpages-controle-financeiro.firebaseapp.com",
-    projectId: "mmrpages-controle-financeiro",
-    storageBucket: "mmrpages-controle-financeiro.firebasestorage.app",
-    messagingSenderId: "415288375426",
-    appId: "1:415288375426:web:fd5e211ca0bc6324da9c9b"
-  };
-
+  // 2. Inicializa o Firebase usando a config importada
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
@@ -65,11 +59,12 @@
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
       }
-      window.location.href = 'index.html'; // Redireciona após sucesso
+      window.location.href = 'index.html'; 
     } catch (error) {
       alert("Erro na autenticação: " + error.message);
     }
   };
 </script>
+
 </body>
 </html>
