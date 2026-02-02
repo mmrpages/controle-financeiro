@@ -1,5 +1,5 @@
 /**
- * SISTEMA FINANCEIRO 2026 - LOGICA CONSOLIDADA COM MOEDA NO GRÁFICO
+ * SISTEMA FINANCEIRO 2026 - LOGICA COM TOTAIS DINÂMICOS
  */
 const STORAGE_KEY = 'fin_v2026_sky_final';
 const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
@@ -11,7 +11,8 @@ let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
     { id: 'c1', name: 'Aluguel', type: 'Moradia' },
     { id: 'c2', name: 'Alimentação', type: 'Variável' }
   ],
-  data: months.map(() => ({ income: 0, expenses: {} }))
+  data: months.map(() => ({ income: 0, expenses: {} })),
+  settings: { showTotals: { "Cartão": true } } // Configuração inicial
 };
 
 let currentEditId = null; 
@@ -20,6 +21,7 @@ let myChart = null;
 // --- SINCRONIZAÇÃO ---
 window.updateStateFromFirebase = (newData) => {
   state = newData;
+  if (!state.settings) state.settings = { showTotals: { "Cartão": true } };
   build();
 };
 
@@ -37,7 +39,7 @@ async function save() {
   build();
 }
 
-// --- MODAIS ---
+// --- MODAIS DE DADOS ---
 function setupCategorySelect() {
   const select = document.getElementById('inputExpenseCategory');
   if (select) select.innerHTML = PRESET_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
@@ -81,11 +83,38 @@ async function processDataModal() {
   await save();
 }
 
+// --- MODAL DE CONFIGURAÇÃO DE TOTAIS ---
+function toggleTotalsMenu() {
+  const modal = document.getElementById('totalsModal');
+  const list = document.getElementById('totalsOptionsList');
+  const types = [...new Set(state.categories.map(c => c.type))];
+  
+  list.innerHTML = types.map(type => `
+    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+      <input type="checkbox" id="chk-${type}" ${state.settings.showTotals[type] ? 'checked' : ''} 
+             onchange="updateTotalVisibility('${type}', this.checked)">
+      <label for="chk-${type}" style="cursor:pointer">Exibir total de <b>${type}</b></label>
+    </div>
+  `).join('');
+  
+  modal.style.display = 'flex';
+}
+
+async function updateTotalVisibility(type, isVisible) {
+  state.settings.showTotals[type] = isVisible;
+  await save();
+}
+
+function closeTotalsModal() {
+  document.getElementById('totalsModal').style.display = 'none';
+  build();
+}
+
+// --- GRÁFICOS ---
 function openMonthChart(m) {
   const modal = document.getElementById('chartModal');
   const canvas = document.getElementById('categoryChart');
   if (!canvas) return;
-  
   modal.style.display = 'flex';
   document.getElementById('modalTitle').innerText = `Resumo: ${months[m]}`;
 
@@ -111,27 +140,15 @@ function openMonthChart(m) {
         }]
       },
       options: { 
-        responsive: true, 
-        maintainAspectRatio: false, 
+        responsive: true, maintainAspectRatio: false, 
         plugins: { 
-          legend: { 
-            position: 'bottom',
-            labels: {
-              generateLabels: (chart) => {
-                const data = chart.data;
-                return data.labels.map((label, i) => ({
-                  text: `${label}: ${brFormatter.format(data.datasets[0].data[i])}`,
-                  fillStyle: data.datasets[0].backgroundColor[i],
-                  index: i
-                }));
-              }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => ` ${context.label}: ${brFormatter.format(context.parsed)}`
-            }
-          }
+          legend: { position: 'bottom', labels: {
+            generateLabels: (chart) => chart.data.labels.map((label, i) => ({
+              text: `${label}: ${brFormatter.format(chart.data.datasets[0].data[i])}`,
+              fillStyle: chart.data.datasets[0].backgroundColor[i], index: i
+            }))
+          }},
+          tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${brFormatter.format(ctx.parsed)}` }}
         } 
       }
     });
@@ -140,20 +157,28 @@ function openMonthChart(m) {
 
 function closeModal() { document.getElementById('chartModal').style.display = 'none'; }
 
-// --- TABELA ---
+// --- CÁLCULOS E CONSTRUÇÃO DA TABELA ---
 function calculate() {
   let tR = 0, tG = 0, mA = 0;
   months.forEach((_, m) => {
     const inc = parseVal(document.getElementById(`inc-${m}`).value);
     state.data[m].income = inc;
-    let mG = 0, totalCartao = 0;
+    let mG = 0;
+    const typeSums = {};
+
     state.categories.forEach(c => {
       const val = parseVal(document.getElementById(`e-${m}-${c.id}`).value);
       state.data[m].expenses[c.id] = val;
       mG += val;
-      if (c.type === "Cartão") totalCartao += val;
+      typeSums[c.type] = (typeSums[c.type] || 0) + val;
     });
-    if (document.getElementById(`total-cartao-${m}`)) document.getElementById(`total-cartao-${m}`).value = brFormatter.format(totalCartao);
+
+    // Atualiza colunas de totais de grupo se estiverem visíveis
+    Object.keys(typeSums).forEach(type => {
+      const el = document.getElementById(`total-group-${type}-${m}`);
+      if (el) el.value = brFormatter.format(typeSums[type]);
+    });
+
     document.getElementById(`total-${m}`).value = brFormatter.format(mG);
     document.getElementById(`saldo-${m}`).value = brFormatter.format(inc - mG);
     const perc = inc > 0 ? (mG / inc) * 100 : 0;
@@ -171,21 +196,31 @@ function calculate() {
 function build() {
   const head = document.getElementById('tableHead');
   if(!head) return;
+  if(!state.settings) state.settings = { showTotals: {} };
+
   const groups = {};
   state.categories.forEach(c => groups[c.type] = (groups[c.type] || 0) + 1);
-  let h = `<tr><th colspan="2" style="background:none; border:none"></th>`;
+
+  let h1 = `<tr><th colspan="2" style="background:none; border:none">
+    <button class="btn" style="font-size:10px; padding:4px 8px" onclick="toggleTotalsMenu()">⚙️ Totais</button>
+  </th>`;
+  
   Object.keys(groups).forEach(type => {
-    let span = groups[type]; if (type === "Cartão") span += 1; 
-    h += `<th colspan="${span}" class="group-header">${type}</th>`;
+    let span = groups[type];
+    if (state.settings.showTotals[type]) span += 1; 
+    h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
   });
-  h += `</tr><tr><th>Mês</th><th>Renda</th>`;
+  h1 += `</tr><tr><th>Mês</th><th>Renda</th>`;
+
   state.categories.forEach((c, index) => {
-    h += `<th><div style="cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div><div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
+    h1 += `<th><div style="cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div><div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
     const nextCat = state.categories[index + 1];
-    if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) h += `<th style="background: var(--card-sum-bg); color: var(--danger)">Total Cartão</th>`;
+    if ((!nextCat || nextCat.type !== c.type) && state.settings.showTotals[c.type]) {
+      h1 += `<th style="background: var(--card-sum-bg); color: var(--danger)">Total ${c.type}</th>`;
+    }
   });
-  h += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
-  head.innerHTML = h;
+  h1 += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
+  head.innerHTML = h1;
 
   document.getElementById('tableBody').innerHTML = months.map((n, m) => `
     <tr>
@@ -194,7 +229,9 @@ function build() {
       ${state.categories.map((c, index) => {
         let html = `<td><input id="e-${m}-${c.id}" class="input" value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''" onblur="save()"></td>`;
         const nextCat = state.categories[index + 1];
-        if (c.type === "Cartão" && (!nextCat || nextCat.type !== "Cartão")) html += `<td><input id="total-cartao-${m}" class="input input-readonly input-total-cartao" readonly></td>`;
+        if ((!nextCat || nextCat.type !== c.type) && state.settings.showTotals[c.type]) {
+          html += `<td><input id="total-group-${c.type}-${m}" class="input input-readonly" style="background:rgba(239,68,68,0.05); font-weight:bold; color:var(--danger)" readonly></td>`;
+        }
         return html;
       }).join('')}
       <td><input id="total-${m}" class="input input-readonly" style="color:var(--danger)" readonly></td>
@@ -207,6 +244,6 @@ function build() {
 function addExpense() { openDataModal(); }
 function editColumn(id) { openDataModal(id); }
 async function deleteColumn(id) { if (confirm("Excluir coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } }
-async function resetAll() { if (confirm("Resetar tudo na nuvem e local?")) { state.categories = [{ id: 'c1', name: 'Aluguel', type: 'Moradia' }, { id: 'c2', name: 'Alimentação', type: 'Variável' }]; state.data = months.map(() => ({ income: 0, expenses: {} })); localStorage.removeItem(STORAGE_KEY); await save(); } }
+async function resetAll() { if (confirm("Resetar tudo?")) { state.categories = [{ id: 'c1', name: 'Aluguel', type: 'Moradia' }, { id: 'c2', name: 'Alimentação', type: 'Variável' }]; state.data = months.map(() => ({ income: 0, expenses: {} })); state.settings = { showTotals: {} }; localStorage.removeItem(STORAGE_KEY); await save(); } }
 
 build();
