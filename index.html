@@ -39,12 +39,12 @@
 </div>
 
 <div id="chartModal" class="modal">
-  <div class="modal-content">
-    <h2 id="modalTitle"></h2>
-    <div class="chart-container" style="position: relative; height:400px; width:100%">
+  <div class="modal-content" style="max-width: 500px;">
+    <h2 id="modalTitle" style="margin-bottom: 20px;"></h2>
+    <div class="chart-container" style="position: relative; height:350px; width:100%">
       <canvas id="categoryChart"></canvas>
     </div>
-    <p id="modalTotal" style="font-weight: bold; margin-top: 15px;"></p>
+    <div id="modalTotal" style="font-size: 1.2rem; font-weight: bold; margin: 20px 0; color: #0ea5e9;"></div>
     <button class="btn" style="width: 100%" onclick="closeModal()">Fechar</button>
   </div>
 </div>
