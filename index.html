@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body oncontextmenu="return false"> 
-<div class="container" style="display: none;"> 
+<div id="mainContainer" class="container" style="display: none;"> 
   <header>
     <h1>Finanças 2026</h1>
     <div class="toolbar">
-      <button class="btn btn-accent" onclick="addExpense()">+ Despesa</button>
-      <button class="btn" onclick="openSettingsModal()">⚙️ Configurar Grupos</button>
-      <button class="btn" style="color:var(--text-muted)" onclick="logout()">Sair</button>
-      <button class="btn" style="color:var(--danger)" onclick="resetAll()">Limpar Tudo</button>
+      <button class="btn btn-accent" id="btnAddExpense">+ Despesa</button>
+      <button class="btn" id="btnSettings">⚙️ Grupos</button>
+      <button class="btn" style="color:var(--text-muted)" id="btnLogout">Sair</button>
+      <button class="btn" style="color:var(--danger)" id="btnReset">Limpar Tudo</button>
     </div>
   </header>
 
@@ -36,27 +36,27 @@
 </div>
 
 <div id="settingsModal" class="modal">
-  <div class="modal-content" style="max-width: 400px; text-align: left; display: block;">
-    <h2 style="margin-bottom: 15px;">Configurar Grupos</h2>
-    <div id="presetsList" style="margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto;"></div>
+  <div class="modal-content" style="max-width: 400px; text-align: left;">
+    <h2>Configurar Grupos</h2>
+    <div id="presetsList" style="margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto;"></div>
     <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-      <input type="text" id="newPresetName" class="auth-input" style="margin:0" placeholder="Novo grupo...">
-      <button class="btn btn-accent" onclick="addNewPreset()">+</button>
+      <input type="text" id="newPresetName" class="auth-input" placeholder="Novo grupo...">
+      <button class="btn btn-accent" id="btnAddNewPreset">+</button>
     </div>
-    <button class="btn" style="width:100%" onclick="closeSettingsModal()">Fechar</button>
+    <button class="btn" style="width:100%" id="btnCloseSettings">Fechar</button>
   </div>
 </div>
 
 <div id="dataModal" class="modal">
-  <div class="modal-content" style="max-width: 400px; display: block; text-align: left;">
-    <h2 id="dataModalTitle" style="margin-bottom: 15px;">Lançar Despesa</h2>
+  <div class="modal-content" style="max-width: 400px; text-align: left;">
+    <h2 id="dataModalTitle">Lançar Despesa</h2>
     <input type="text" id="inputExpenseName" class="auth-input" placeholder="Nome (ex: Aluguel)">
     <select id="inputExpenseCategory" class="auth-input"></select>
     <button id="btnSaveData" class="btn btn-accent" style="width:100%; margin-top: 15px;">Salvar</button>
-    <button class="btn" style="width:100%; margin-top: 10px;" onclick="closeDataModal()">Cancelar</button>
+    <button class="btn" style="width:100%; margin-top: 10px;" id="btnCloseData">Cancelar</button>
   </div>
 </div>
 
-<script src="script.js" defer></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
