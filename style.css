@@ -100,3 +100,29 @@ td { padding: 10px; border-bottom: 1px solid #f1f5f9; text-align: center; }
 .chart-container { height: 280px; width: 100%; position: relative; }
 #modalTitle { margin-bottom: 20px; color: var(--text-main); width: 100%; }
 #modalTotal { margin: 25px 0 15px 0; font-weight: 800; color: var(--accent-blue); font-size: 1.2rem; }
+
+.auth-input {
+  width: 100%;                  /* Ocupa toda a largura do modal */
+  padding: 12px 15px;           /* Aumenta a área de clique e conforto visual */
+  margin: 10px 0;               /* Espaçamento vertical entre os elementos */
+  border: 1px solid #ddd;       /* Borda suave */
+  border-radius: 10px;          /* Arredondamento moderno */
+  font-size: 1rem;              /* Tamanho de fonte legível */
+  box-sizing: border-box;       /* Garante que o padding não quebre a largura */
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.auth-input:focus {
+  border-color: var(--accent-blue); /* Realce ao selecionar o campo */
+  outline: none;
+}
+
+select.auth-input {
+  appearance: none;             /* Remove o estilo padrão do navegador */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 15px;
+  cursor: pointer;
+}
