@@ -1,12 +1,11 @@
-<script type="module">
-  import firebaseConfig from './config.js'; // Importa as chaves do arquivo externo
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+// config.js
+const firebaseConfig = {
+  apiKey: "AIzaSyCEhMZcmsklTArvDk2AMDg3Vm6RxzE2a8c",
+  authDomain: "mmrpages-controle-financeiro.firebaseapp.com",
+  projectId: "mmrpages-controle-financeiro",
+  storageBucket: "mmrpages-controle-financeiro.firebasestorage.app",
+  messagingSenderId: "415288375426",
+  appId: "1:415288375426:web:fd5e211ca0bc6324da9c9b"
+};
 
-  // O restante do seu código de inicialização continua igual...
-  const app = initializeApp(firebaseConfig);
-  window.auth = getAuth(app);
-  window.db = getFirestore(app);
-  // ...
-</script>
+export default firebaseConfig;
