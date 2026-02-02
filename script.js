@@ -36,20 +36,23 @@ async function save() {
   build();
 }
 
-// --- GESTÃO DE GRUPOS ---
+// --- GESTÃO DE GRUPOS (CONFIGURAÇÕES) ---
 window.openSettingsModal = () => {
   const modal = document.getElementById('settingsModal');
   const list = document.getElementById('presetsList');
   list.innerHTML = state.presets.map(p => `
     <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee; color: #333;">
       <span>${p}</span>
-      <button onclick="removePreset('${p}')" style="background:none; border:none; color:red; cursor:pointer;">🗑️</button>
+      <button onclick="removePreset('${p}')" style="background:none; border:none; color:red; cursor:pointer; font-size:1.2rem">🗑️</button>
     </div>
   `).join('');
   modal.style.display = 'flex';
 };
 
-window.closeSettingsModal = () => { document.getElementById('settingsModal').style.display = 'none'; build(); };
+window.closeSettingsModal = () => {
+  document.getElementById('settingsModal').style.display = 'none';
+  build();
+};
 
 window.addNewPreset = async () => {
   const input = document.getElementById('newPresetName');
@@ -63,10 +66,12 @@ window.addNewPreset = async () => {
 };
 
 window.removePreset = async (type) => {
-  if (state.categories.some(c => c.type === type)) {
-    alert("Grupo em uso!"); return;
+  const inUse = state.categories.some(c => c.type === type);
+  if (inUse) {
+    alert("Não pode apagar um grupo que possui despesas ativas!");
+    return;
   }
-  if (confirm(`Remover "${type}"?`)) {
+  if (confirm(`Remover o grupo "${type}"?`)) {
     state.presets = state.presets.filter(p => p !== type);
     await save();
     openSettingsModal();
@@ -90,7 +95,7 @@ function build() {
   });
   h1 += `</tr><tr><th>Mês</th><th>Renda</th>`;
 
-  state.categories.forEach((c, index) => {
+  state.categories.forEach(c => {
     h1 += `<th><div onclick="editColumn('${c.id}')" style="cursor:pointer">${c.name}</div><div onclick="deleteColumn('${c.id}')" style="font-size:9px; color:red; cursor:pointer">Excluir</div></th>`;
   });
   h1 += `<th>Total Geral</th><th>Saldo</th><th>%</th></tr>`;
@@ -109,6 +114,7 @@ function build() {
 }
 
 function calculate() {
+  let tR = 0, tG = 0;
   months.forEach((_, m) => {
     const inc = parseVal(document.getElementById(`inc-${m}`).value);
     state.data[m].income = inc;
@@ -120,12 +126,19 @@ function calculate() {
     });
     document.getElementById(`total-${m}`).value = brFormatter.format(mG);
     document.getElementById(`saldo-${m}`).value = brFormatter.format(inc - mG);
+    const perc = inc > 0 ? (mG / inc) * 100 : 0;
+    const bar = document.getElementById(`bar-${m}`);
+    if(bar) bar.style.width = Math.min(100, perc) + '%';
+    tR += inc; tG += mG;
   });
+  document.getElementById('totalRenda').textContent = brFormatter.format(tR);
+  document.getElementById('totalGasto').textContent = brFormatter.format(tG);
 }
 
+// --- MODAIS DE DESPESA ---
 window.addExpense = () => openDataModal();
 window.editColumn = (id) => openDataModal(id);
-window.deleteColumn = async (id) => { if(confirm("Excluir?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } };
+window.deleteColumn = async (id) => { if (confirm("Excluir coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } };
 window.closeDataModal = () => document.getElementById('dataModal').style.display = 'none';
 
 function openDataModal(id = null) {
@@ -155,5 +168,7 @@ document.getElementById('btnSaveData').onclick = async () => {
   window.closeDataModal();
   await save();
 };
+
+window.resetAll = async () => { if (confirm("Limpar todos os dados?")) { state.categories = []; await save(); } };
 
 build();
