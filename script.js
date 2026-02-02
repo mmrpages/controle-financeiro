@@ -66,6 +66,7 @@ function closeTotalsModal() {
 }
 
 // --- GRÁFICO (CONSOLIDADO POR CATEGORIA) ---
+
 function openMonthChart(m) {
   const modal = document.getElementById('chartModal');
   const canvas = document.getElementById('categoryChart');
@@ -73,10 +74,13 @@ function openMonthChart(m) {
   modal.style.display = 'flex';
   document.getElementById('modalTitle').innerText = `Resumo por Categoria: ${months[m]}`;
 
+  // Consolidação por TIPO (Ex: Soma tudo que é "Moradia" em um único item)
   const typeTotals = {};
   state.categories.forEach(c => {
     const val = state.data[m].expenses[c.id] || 0;
-    if (val > 0) typeTotals[c.type] = (typeTotals[c.type] || 0) + val;
+    if (val > 0) {
+      typeTotals[c.type] = (typeTotals[c.type] || 0) + val;
+    }
   });
 
   const labels = Object.keys(typeTotals);
@@ -98,15 +102,16 @@ function openMonthChart(m) {
         }]
       },
       options: { 
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom', labels: {
-                generateLabels: (chart) => chart.data.labels.map((label, i) => ({
-                    text: `${label}: ${brFormatter.format(chart.data.datasets[0].data[i])}`,
-                    fillStyle: chart.data.datasets[0].backgroundColor[i], index: i
-                }))
-            }}
-        }
+        responsive: true, maintainAspectRatio: false, 
+        plugins: { 
+          legend: { position: 'bottom', labels: {
+            generateLabels: (chart) => chart.data.labels.map((label, i) => ({
+              text: `${label}: ${brFormatter.format(chart.data.datasets[0].data[i])}`,
+              fillStyle: chart.data.datasets[0].backgroundColor[i], index: i
+            }))
+          }},
+          tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${brFormatter.format(ctx.parsed)}` }}
+        } 
       }
     });
   }
@@ -152,38 +157,55 @@ function calculate() {
 function build() {
   const head = document.getElementById('tableHead');
   if(!head) return;
+  if(!state.settings) state.settings = { showTotals: {} };
 
-  // CORREÇÃO: Ordenar para que categorias do mesmo tipo fiquem juntas
-  state.categories.sort((a, b) => a.type.localeCompare(b.type));
-
+  // 1. Agrupar categorias por tipo para calcular o span correto
   const groups = {};
   state.categories.forEach(c => groups[c.type] = (groups[c.type] || 0) + 1);
 
-  let h1 = `<tr><th colspan="2" style="background:none; border:none"><button class="btn" style="font-size:10px; padding:4px 8px" onclick="toggleTotalsMenu()">⚙️ Totais</button></th>`;
+  let h1 = `<tr><th colspan="2" style="background:none; border:none">
+    <button class="btn" style="font-size:10px; padding:4px 8px" onclick="toggleTotalsMenu()">⚙️ Totais</button>
+  </th>`;
+  
   Object.keys(groups).forEach(type => {
     let span = groups[type];
-    if (state.settings.showTotals[type]) span += 1;
+    // Adiciona +1 ao span se o total daquela categoria estiver ativo
+    if (state.settings.showTotals[type]) span += 1; 
     h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
   });
-  h1 += `</tr><tr><th>Mês</th><th>Renda</th>`;
+  h1 += `</tr>`;
 
+  let h2 = `<tr><th>Mês</th><th>Renda</th>`;
   state.categories.forEach((c, index) => {
-    h1 += `<th><div style="cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div><div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
+    // Renderiza a coluna do item individual
+    h2 += `<th>
+      <div style="font-weight:600; cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div>
+      <div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div>
+    </th>`;
+    
+    // VERIFICAÇÃO: Só insere a coluna de Total se for o ÚLTIMO item deste tipo
     const nextCat = state.categories[index + 1];
     if ((!nextCat || nextCat.type !== c.type) && state.settings.showTotals[c.type]) {
-      h1 += `<th style="background: rgba(239, 68, 68, 0.05); color: var(--danger)">Total ${c.type}</th>`;
+      h2 += `<th style="background: rgba(239, 68, 68, 0.05); color: var(--danger)">Total ${c.type}</th>`;
     }
   });
-  h1 += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
-  head.innerHTML = h1;
+  h2 += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
+  head.innerHTML = h1 + h2;
 
+  // Renderização do Corpo da Tabela
   document.getElementById('tableBody').innerHTML = months.map((n, m) => `
     <tr>
       <td><span class="month-label" onclick="openMonthChart(${m})">${n}</span></td>
-      <td><input id="inc-${m}" class="input" style="color:#7c3aed; font-weight:bold" value="${state.data[m].income ? brFormatter.format(state.data[m].income) : ''}" oninput="calculate()" onfocus="this.value=state.data[${m}].income||''" onblur="save()"></td>
+      <td><input id="inc-${m}" class="input" style="color:#7c3aed; font-weight:bold" 
+          value="${state.data[m].income ? brFormatter.format(state.data[m].income) : ''}" 
+          oninput="calculate()" onfocus="this.value=state.data[${m}].income||''" onblur="save()"></td>
       ${state.categories.map((c, index) => {
-        let html = `<td><input id="e-${m}-${c.id}" class="input" value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''" onblur="save()"></td>`;
+        let html = `<td><input id="e-${m}-${c.id}" class="input" 
+                    value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" 
+                    oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''" onblur="save()"></td>`;
+        
         const nextCat = state.categories[index + 1];
+        // Insere a célula de valor total apenas no final do grupo
         if ((!nextCat || nextCat.type !== c.type) && state.settings.showTotals[c.type]) {
           html += `<td><input id="total-group-${c.type}-${m}" class="input input-readonly" style="font-weight:bold; color:var(--danger)" readonly></td>`;
         }
