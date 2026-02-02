@@ -1,5 +1,5 @@
 /**
- * SISTEMA FINANCEIRO 2026 - VERSÃO FINAL CORRIGIDA
+ * SISTEMA FINANCEIRO 2026 - VERSÃO FINAL ATUALIZADA
  */
 const STORAGE_KEY = 'fin_v2026_sky_final';
 const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
@@ -65,7 +65,7 @@ function closeTotalsModal() {
   build();
 }
 
-// --- GRÁFICO (CONSOLIDADO POR CATEGORIA) ---
+// --- GRÁFICO (CONSOLIDADO POR TIPO) ---
 function openMonthChart(m) {
   const modal = document.getElementById('chartModal');
   const canvas = document.getElementById('categoryChart');
@@ -153,7 +153,7 @@ function build() {
   const head = document.getElementById('tableHead');
   if(!head) return;
 
-  // CORREÇÃO: Ordenar para que categorias do mesmo tipo fiquem juntas
+  // CORREÇÃO: Forçar agrupamento para evitar colunas de total no meio do grupo
   state.categories.sort((a, b) => a.type.localeCompare(b.type));
 
   const groups = {};
@@ -196,38 +196,56 @@ function build() {
   calculate();
 }
 
-// --- OUTRAS FUNÇÕES ---
+// --- GESTÃO DE CATEGORIAS (NOVA/EDITAR) ---
 function openDataModal(id = null) {
   currentEditId = id;
   const modal = document.getElementById('dataModal');
+  const title = document.getElementById('dataModalTitle');
   const select = document.getElementById('inputExpenseCategory');
+  const inputName = document.getElementById('inputExpenseName');
+  
   select.innerHTML = PRESET_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
   if (id) {
     const cat = state.categories.find(c => c.id === id);
-    document.getElementById('inputExpenseName').value = cat.name;
+    title.innerText = "Editar Categoria";
+    inputName.value = cat.name;
     select.value = cat.type;
   } else {
-    document.getElementById('inputExpenseName').value = "";
+    title.innerText = "Nova Despesa";
+    inputName.value = "";
+    select.value = PRESET_CATEGORIES[0];
   }
+
   modal.style.display = 'flex';
+
   document.getElementById('btnSaveData').onclick = async () => {
-    const name = document.getElementById('inputExpenseName').value.trim();
+    const name = inputName.value.trim();
     const type = select.value;
     if (!name) return;
+
     if (currentEditId) {
       const cat = state.categories.find(c => c.id === currentEditId);
-      cat.name = name; cat.type = type;
+      cat.name = name; 
+      cat.type = type;
     } else {
       state.categories.push({ id: 'ex_' + Date.now(), name, type });
     }
-    document.getElementById('dataModal').style.display = 'none';
+    closeDataModal();
     await save();
   };
 }
+
 function closeDataModal() { document.getElementById('dataModal').style.display = 'none'; }
 function addExpense() { openDataModal(); }
 function editColumn(id) { openDataModal(id); }
-async function deleteColumn(id) { if (confirm("Excluir coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } }
+async function deleteColumn(id) { 
+  const cat = state.categories.find(c => c.id === id);
+  if (confirm(`Excluir a categoria "${cat.name}"?`)) { 
+    state.categories = state.categories.filter(c => c.id !== id); 
+    await save(); 
+  } 
+}
 async function resetAll() { if (confirm("Resetar tudo?")) { state.categories = []; state.data = months.map(() => ({ income: 0, expenses: {} })); await save(); } }
 
 build();
