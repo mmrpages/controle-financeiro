@@ -1,26 +1,27 @@
 /**
- * SISTEMA FINANCEIRO 2026 - GESTÃO DE GRUPOS DINÂMICOS
+ * SISTEMA FINANCEIRO 2026 - LOGICA COM TOTAIS DINÂMICOS
  */
 const STORAGE_KEY = 'fin_v2026_sky_final';
+const PRESET_CATEGORIES = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
 const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 const brFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// O 'state' agora guarda a lista de grupos (presets)
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-  presets: ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"],
-  categories: [],
+  categories: [
+    { id: 'c1', name: 'Aluguel', type: 'Moradia' },
+    { id: 'c2', name: 'Alimentação', type: 'Variável' }
+  ],
   data: months.map(() => ({ income: 0, expenses: {} })),
-  settings: { showTotals: {} }
+  settings: { showTotals: { "Cartão": true } } // Configuração inicial
 };
 
-let currentEditId = null;
-let myChart = null;
+let currentEditId = null; 
+let myChart = null; 
 
 // --- SINCRONIZAÇÃO ---
 window.updateStateFromFirebase = (newData) => {
   state = newData;
-  if (!state.presets) state.presets = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"];
-  if (!state.settings) state.settings = { showTotals: {} };
+  if (!state.settings) state.settings = { showTotals: { "Cartão": true } };
   build();
 };
 
@@ -38,95 +39,156 @@ async function save() {
   build();
 }
 
-// --- GESTÃO DE GRUPOS (NOVO) ---
+// --- MODAIS DE DADOS ---
+function setupCategorySelect() {
+  const select = document.getElementById('inputExpenseCategory');
+  if (select) select.innerHTML = PRESET_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+}
 
-window.openSettingsModal = () => {
-  const modal = document.getElementById('settingsModal');
-  const list = document.getElementById('presetsList');
+function openDataModal(id = null) {
+  currentEditId = id;
+  setupCategorySelect();
+  const modal = document.getElementById('dataModal');
+  const nameInput = document.getElementById('inputExpenseName');
+  const catSelect = document.getElementById('inputExpenseCategory');
+
+  if (id) {
+    const cat = state.categories.find(c => c.id === id);
+    document.getElementById('dataModalTitle').innerText = "Editar Coluna";
+    nameInput.value = cat.name;
+    catSelect.value = cat.type;
+  } else {
+    document.getElementById('dataModalTitle').innerText = "Nova Despesa";
+    nameInput.value = "";
+    catSelect.selectedIndex = 0;
+  }
+  modal.style.display = 'flex';
+  document.getElementById('btnSaveData').onclick = processDataModal;
+}
+
+function closeDataModal() { document.getElementById('dataModal').style.display = 'none'; }
+
+async function processDataModal() {
+  const name = document.getElementById('inputExpenseName').value.trim();
+  const type = document.getElementById('inputExpenseCategory').value;
+  if (!name) return alert("Insira um nome.");
+
+  if (currentEditId) {
+    const cat = state.categories.find(c => c.id === currentEditId);
+    cat.name = name; cat.type = type;
+  } else {
+    state.categories.push({ id: 'ex_' + Date.now(), name, type });
+  }
+  closeDataModal();
+  await save();
+}
+
+// --- MODAL DE CONFIGURAÇÃO DE TOTAIS ---
+function toggleTotalsMenu() {
+  const modal = document.getElementById('totalsModal');
+  const list = document.getElementById('totalsOptionsList');
+  const types = [...new Set(state.categories.map(c => c.type))];
   
-  // Renderiza a lista de grupos atuais com botão de excluir
-  list.innerHTML = state.presets.map(p => `
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee; color: #333;">
-      <span>${p}</span>
-      <button onclick="removePreset('${p}')" style="background:none; border:none; color:red; cursor:pointer; font-size: 1.2rem;">🗑️</button>
+  list.innerHTML = types.map(type => `
+    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 14px;">
+      <input type="checkbox" id="chk-${type}" ${state.settings.showTotals[type] ? 'checked' : ''} 
+             onchange="updateTotalVisibility('${type}', this.checked)">
+      <label for="chk-${type}" style="cursor:pointer">Exibir total de <b>${type}</b></label>
     </div>
   `).join('');
   
   modal.style.display = 'flex';
-};
-
-window.closeSettingsModal = () => {
-  document.getElementById('settingsModal').style.display = 'none';
-  build();
-};
-
-window.addNewPreset = async () => {
-  const input = document.getElementById('newPresetName');
-  const name = input.value.trim();
-  
-  if (name && !state.presets.includes(name)) {
-    state.presets.push(name);
-    input.value = "";
-    await save();
-    openSettingsModal(); 
-  }
-};
-
-window.removePreset = async (type) => {
-  const inUse = state.categories.some(c => c.type === type);
-  if (inUse) {
-    alert(`O grupo "${type}" está em uso. Mude as despesas de grupo antes de o excluir.`);
-    return;
-  }
-  
-  if (confirm(`Deseja apagar o grupo "${type}"?`)) {
-    state.presets = state.presets.filter(p => p !== type);
-    await save();
-    openSettingsModal();
-  }
-};
-
-// --- MODAL DE DESPESAS ---
-
-function openDataModal(id = null) {
-  currentEditId = id;
-  const modal = document.getElementById('dataModal');
-  const select = document.getElementById('inputExpenseCategory');
-  const inputName = document.getElementById('inputExpenseName');
-  
-  // Popula o select com os grupos do state
-  select.innerHTML = state.presets.map(p => `<option value="${p}">${p}</option>`).join('');
-
-  if (id) {
-    const cat = state.categories.find(c => c.id === id);
-    inputName.value = cat.name;
-    select.value = cat.type;
-  } else {
-    inputName.value = "";
-  }
-  
-  modal.style.display = 'flex';
-
-  document.getElementById('btnSaveData').onclick = async () => {
-    const name = inputName.value.trim();
-    const type = select.value;
-
-    if (!name) return;
-
-    if (currentEditId) {
-      const cat = state.categories.find(c => c.id === currentEditId);
-      cat.name = name; cat.type = type;
-    } else {
-      state.categories.push({ id: 'ex_' + Date.now(), name, type });
-    }
-    
-    closeDataModal();
-    await save();
-  };
 }
 
-// --- CÁLCULOS E TABELA ---
+async function updateTotalVisibility(type, isVisible) {
+  state.settings.showTotals[type] = isVisible;
+  await save();
+}
 
+function closeTotalsModal() {
+  document.getElementById('totalsModal').style.display = 'none';
+  build();
+}
+
+// --- GRÁFICOS ---
+function openMonthChart(m) {
+  const modal = document.getElementById('chartModal');
+  const canvas = document.getElementById('categoryChart');
+  if (!canvas) return;
+  
+  modal.style.display = 'flex';
+  document.getElementById('modalTitle').innerText = `Resumo por Categoria: ${months[m]}`;
+
+  // Consolidação por TIPO (Ex: Fixa, Variável...)
+  const consolidatedTotals = {};
+  
+  state.categories.forEach(c => {
+    const val = state.data[m].expenses[c.id] || 0;
+    if (val > 0) {
+      // Agrupa pelo TIPO da categoria, não pelo nome individual
+      consolidatedTotals[c.type] = (consolidatedTotals[c.type] || 0) + val;
+    }
+  });
+
+  const labels = Object.keys(consolidatedTotals);
+  const values = Object.values(consolidatedTotals);
+  const totalGeral = values.reduce((a, b) => a + b, 0);
+
+  document.getElementById('modalTotal').innerText = totalGeral > 0 
+    ? `Total do Mês: ${brFormatter.format(totalGeral)}` 
+    : "Sem gastos registrados.";
+
+  if (myChart) myChart.destroy();
+  
+  if (totalGeral > 0) {
+    myChart = new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#334155'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              generateLabels: (chart) => {
+                return chart.data.labels.map((label, i) => {
+                  const val = chart.data.datasets[0].data[i];
+                  const perc = ((val / totalGeral) * 100).toFixed(1);
+                  return {
+                    text: `${label}: ${brFormatter.format(val)} (${perc}%)`,
+                    fillStyle: chart.data.datasets[0].backgroundColor[i],
+                    index: i
+                  };
+                });
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.parsed;
+                const perc = ((val / totalGeral) * 100).toFixed(1);
+                return ` ${ctx.label}: ${brFormatter.format(val)} (${perc}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+function closeModal() { document.getElementById('chartModal').style.display = 'none'; }
+
+// --- CÁLCULOS E CONSTRUÇÃO DA TABELA ---
 function calculate() {
   let tR = 0, tG = 0, mA = 0;
   months.forEach((_, m) => {
@@ -142,6 +204,7 @@ function calculate() {
       typeSums[c.type] = (typeSums[c.type] || 0) + val;
     });
 
+    // Atualiza colunas de totais de grupo se estiverem visíveis
     Object.keys(typeSums).forEach(type => {
       const el = document.getElementById(`total-group-${type}-${m}`);
       if (el) el.value = brFormatter.format(typeSums[type]);
@@ -151,63 +214,67 @@ function calculate() {
     document.getElementById(`saldo-${m}`).value = brFormatter.format(inc - mG);
     const perc = inc > 0 ? (mG / inc) * 100 : 0;
     const bar = document.getElementById(`bar-${m}`);
-    if(bar) bar.style.width = Math.min(100, perc) + '%';
+    if(bar) { bar.style.width = Math.min(100, perc) + '%'; bar.className = perc > 100 ? 'usage-bar warning' : 'usage-bar'; }
+    if(document.getElementById(`label-${m}`)) document.getElementById(`label-${m}`).textContent = perc.toFixed(0) + '%';
     tR += inc; tG += mG; if(inc > 0 || mG > 0) mA++;
   });
   document.getElementById('totalRenda').textContent = brFormatter.format(tR);
   document.getElementById('totalGasto').textContent = brFormatter.format(tG);
+  document.getElementById('mediaSaldo').textContent = brFormatter.format((tR - tG) / (mA || 1));
+  document.getElementById('mediaPerc').textContent = tR > 0 ? ((tG / tR) * 100).toFixed(1) + '%' : '0%';
 }
 
 function build() {
   const head = document.getElementById('tableHead');
   if(!head) return;
-
-  state.categories.sort((a, b) => a.type.localeCompare(b.type));
+  if(!state.settings) state.settings = { showTotals: {} };
 
   const groups = {};
   state.categories.forEach(c => groups[c.type] = (groups[c.type] || 0) + 1);
 
-  let h1 = `<tr><th colspan="2" style="border:none"></th>`;
+  let h1 = `<tr><th colspan="2" style="background:none; border:none">
+    <button class="btn" style="font-size:10px; padding:4px 8px" onclick="toggleTotalsMenu()">⚙️ Totais</button>
+  </th>`;
+  
   Object.keys(groups).forEach(type => {
-    let span = groups[type] + (state.settings.showTotals[type] ? 1 : 0);
+    let span = groups[type];
+    if (state.settings.showTotals[type]) span += 1; 
     h1 += `<th colspan="${span}" class="group-header">${type}</th>`;
   });
   h1 += `</tr><tr><th>Mês</th><th>Renda</th>`;
 
   state.categories.forEach((c, index) => {
-    h1 += `<th><div onclick="editColumn('${c.id}')" style="cursor:pointer">${c.name}</div><div class="delete-btn" onclick="deleteColumn('${c.id}')" style="font-size:9px; color:red; cursor:pointer">Excluir</div></th>`;
-    const next = state.categories[index + 1];
-    if ((!next || next.type !== c.type) && state.settings.showTotals[c.type]) {
-      h1 += `<th class="total-col">Total ${c.type}</th>`;
+    h1 += `<th><div style="cursor:pointer" onclick="editColumn('${c.id}')">${c.name}</div><div style="font-size:9px; color:var(--danger); cursor:pointer" onclick="deleteColumn('${c.id}')">Excluir</div></th>`;
+    const nextCat = state.categories[index + 1];
+    if ((!nextCat || nextCat.type !== c.type) && state.settings.showTotals[c.type]) {
+      h1 += `<th style="background: var(--card-sum-bg); color: var(--danger)">Total ${c.type}</th>`;
     }
   });
-  h1 += `<th>Total Geral</th><th>Saldo</th><th>%</th></tr>`;
+  h1 += `<th>Total Geral</th><th>Saldo Livre</th><th>Uso (%)</th></tr>`;
   head.innerHTML = h1;
 
   document.getElementById('tableBody').innerHTML = months.map((n, m) => `
     <tr>
-      <td>${n}</td>
-      <td><input id="inc-${m}" class="input" value="${state.data[m].income ? brFormatter.format(state.data[m].income) : ''}" oninput="calculate()" onblur="save()"></td>
+      <td><span class="month-label" onclick="openMonthChart(${m})">${n}</span></td>
+      <td><input id="inc-${m}" class="input" style="color:#7c3aed; font-weight:bold" value="${state.data[m].income ? brFormatter.format(state.data[m].income) : ''}" oninput="calculate()" onfocus="this.value=state.data[${m}].income||''" onblur="save()"></td>
       ${state.categories.map((c, index) => {
-        let html = `<td><input id="e-${m}-${c.id}" class="input" value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" oninput="calculate()" onblur="save()"></td>`;
-        const next = state.categories[index + 1];
-        if ((!next || next.type !== c.type) && state.settings.showTotals[c.type]) {
-          html += `<td><input id="total-group-${c.type}-${m}" class="input-readonly" readonly></td>`;
+        let html = `<td><input id="e-${m}-${c.id}" class="input" value="${state.data[m].expenses[c.id] ? brFormatter.format(state.data[m].expenses[c.id]) : ''}" oninput="calculate()" onfocus="this.value=state.data[${m}].expenses['${c.id}']||''" onblur="save()"></td>`;
+        const nextCat = state.categories[index + 1];
+        if ((!nextCat || nextCat.type !== c.type) && state.settings.showTotals[c.type]) {
+          html += `<td><input id="total-group-${c.type}-${m}" class="input input-readonly" style="background:rgba(239,68,68,0.05); font-weight:bold; color:var(--danger)" readonly></td>`;
         }
         return html;
       }).join('')}
-      <td><input id="total-${m}" class="input-readonly" readonly></td>
-      <td><input id="saldo-${m}" class="input-readonly" readonly></td>
-      <td><div class="usage-bar" id="bar-${m}"></div></td>
+      <td><input id="total-${m}" class="input input-readonly" style="color:var(--danger)" readonly></td>
+      <td><input id="saldo-${m}" class="input input-readonly" style="color:var(--success)" readonly></td>
+      <td><div class="usage-wrapper"><div class="usage-bar" id="bar-${m}"></div><div class="usage-text" id="label-${m}">0%</div></div></td>
     </tr>`).join('');
   calculate();
 }
 
-// Funções de Modal e UI
-window.closeDataModal = () => { document.getElementById('dataModal').style.display = 'none'; };
-window.addExpense = () => { openDataModal(); };
-window.editColumn = (id) => { openDataModal(id); };
-window.deleteColumn = async (id) => { if (confirm("Excluir esta coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } };
-window.resetAll = async () => { if (confirm("Limpar todos os dados?")) { state.categories = []; state.presets = ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão", "Outros"]; state.data = months.map(() => ({ income: 0, expenses: {} })); await save(); } };
+function addExpense() { openDataModal(); }
+function editColumn(id) { openDataModal(id); }
+async function deleteColumn(id) { if (confirm("Excluir coluna?")) { state.categories = state.categories.filter(c => c.id !== id); await save(); } }
+async function resetAll() { if (confirm("Resetar tudo?")) { state.categories = [{ id: 'c1', name: 'Aluguel', type: 'Moradia' }, { id: 'c2', name: 'Alimentação', type: 'Variável' }]; state.data = months.map(() => ({ income: 0, expenses: {} })); state.settings = { showTotals: {} }; localStorage.removeItem(STORAGE_KEY); await save(); } }
 
 build();
