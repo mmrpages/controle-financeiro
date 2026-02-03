@@ -36,11 +36,23 @@
     </div>
   </div>
 
-  <div class="grid-info">
-    <div class="card"><h4>Receita Anual</h4><div id="totalRenda" class="value">R$ 0,00</div></div>
-    <div class="card"><h4>Despesa Anual</h4><div id="totalGasto" class="value text-danger">R$ 0,00</div></div>
-    <div class="card"><h4>Saldo Atual</h4><div id="mediaSaldo" class="value text-success">R$ 0,00</div></div>
-    <div class="card"><h4>Uso da Renda</h4><div id="mediaPerc" class="value">0%</div></div>
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-label">Receita Total</span>
+    <div id="totalRenda" class="stat-value text-success">R$ 0,00</div>
+    <i data-lucide="trending-up"></i>
+  </div>
+  
+  <div class="stat-card">
+    <span class="stat-label">Despesa Total</span>
+    <div id="totalGasto" class="stat-value text-danger">R$ 0,00</div>
+    <i data-lucide="trending-down"></i>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Saldo em Conta</span>
+    <div id="mediaSaldo" class="stat-value">R$ 0,00</div>
+    <i data-lucide="wallet"></i>
   </div>
 </div>
 
