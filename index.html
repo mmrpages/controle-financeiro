@@ -36,24 +36,41 @@
 </div>
 
 <div id="settingsModal" class="modal">
-  <div class="modal-content" style="max-width: 400px; text-align: left;">
-    <h2>Configurar Grupos</h2>
-    <div id="presetsList" style="margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto;"></div>
-    <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-      <input type="text" id="newPresetName" class="auth-input" placeholder="Novo grupo...">
-      <button class="btn btn-accent" id="btnAddNewPreset">+</button>
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header" style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 1.25rem;">Gerenciar Categorias</h2>
+            <button class="btn-close" id="btnCloseSettings" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:var(--text-muted)">&times;</button>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; text-align: left; width: 100%;">
+            Adicione ou remova os grupos que aparecerão na sua planilha.
+        </p>
+
+        <div id="presetsList" class="category-list"></div>
+
+        <div class="category-input-group">
+            <input type="text" id="newPresetName" class="auth-input" placeholder="Ex: Assinaturas, Lazer...">
+            <button class="btn btn-accent" id="btnAddNewPreset" style="padding: 0 20px;">Adicionar</button>
+        </div>
     </div>
-    <button class="btn" style="width:100%" id="btnCloseSettings">Fechar</button>
-  </div>
 </div>
 
-<div id="dataModal" class="modal">
-  <div class="modal-content" style="max-width: 400px; text-align: left;">
-    <h2 id="dataModalTitle">Lançar Despesa</h2>
-    <input type="text" id="inputExpenseName" class="auth-input" placeholder="Nome (ex: Aluguel)">
-    <select id="inputExpenseCategory" class="auth-input"></select>
-    <button id="btnSaveData" class="btn btn-accent" style="width:100%; margin-top: 15px;">Salvar</button>
-    <button class="btn" style="width:100%; margin-top: 10px;" id="btnCloseData">Cancelar</button>
+<<div id="dataModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="dataModalTitle">Lançar Despesa</h2>
+      <button class="btn-close" id="btnCloseDataX">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <input type="text" id="inputExpenseName" class="auth-input" placeholder="Nome (ex: Aluguel)">
+      <select id="inputExpenseCategory" class="auth-input"></select>
+      
+      <div class="modal-actions">
+        <button id="btnSaveData" class="btn btn-accent">Salvar</button>
+        <button id="btnCloseData" class="btn">Cancelar</button>
+      </div>
+    </div>
   </div>
 </div>
 

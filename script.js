@@ -160,21 +160,34 @@ document.getElementById('btnAddExpense').onclick = () => openDataModal();
 document.getElementById('btnLogout').onclick = () => signOut(auth);
 document.getElementById('btnSettings').onclick = () => {
     const list = document.getElementById('presetsList');
+
+    // Renderiza a lista com as novas classes CSS
     list.innerHTML = state.presets.map(p => `
-      <div class="preset-item">
+      <div class="category-item">
         <span>${p}</span>
-        <button class="remove-p" data-p="${p}">🗑️</button>
+        <button class="btn-delete-cat" data-p="${p}">Remover</button>
       </div>
     `).join('');
+
     document.getElementById('settingsModal').style.display = 'flex';
-    
-    document.querySelectorAll('.remove-p').forEach(b => {
-      b.onclick = async () => {
-        if (state.categories.some(c => c.type === b.dataset.p)) return alert("Grupo em uso!");
-        state.presets = state.presets.filter(p => p !== b.dataset.p);
-        await save();
-        document.getElementById('btnSettings').onclick();
-      }
+
+    // Adiciona os eventos de exclusão
+    document.querySelectorAll('.btn-delete-cat').forEach(b => {
+        b.onclick = async () => {
+            const grupo = b.dataset.p;
+
+            // Verifica se o grupo está sendo usado em alguma despesa cadastrada
+            if (state.categories.some(c => c.type === grupo)) {
+                alert(`Não é possível remover "${grupo}" porque existem despesas usando este grupo.`);
+                return;
+            }
+
+            if (confirm(`Deseja realmente excluir o grupo "${grupo}"?`)) {
+                state.presets = state.presets.filter(p => p !== grupo);
+                await save();
+                document.getElementById('btnSettings').onclick(); // Atualiza a lista
+            }
+        }
     });
 };
 
@@ -196,3 +209,4 @@ document.getElementById('btnReset').onclick = async () => {
     await save();
   }
 };
+
