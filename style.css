@@ -176,3 +176,110 @@ select.auth-input {
   background-size: 15px;
   cursor: pointer;
 }
+
+/* Lista de Categorias */
+.category-list {
+    width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-height: 250px;
+    overflow-y: auto;
+    background: #f8fafc;
+    padding: 8px;
+}
+
+/* Item Individual da Lista */
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+    .category-item:hover {
+        border-color: var(--accent-blue);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .category-item span {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+
+/* Botão de Deletar dentro da lista */
+.btn-delete-cat {
+    background: var(--card-sum-bg);
+    color: var(--danger);
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+    .btn-delete-cat:hover {
+        background: #fee2e2;
+    }
+
+/* Container do Input de Nova Categoria */
+.category-input-group {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+    .category-input-group .auth-input {
+        margin: 0; /* Remove a margem padrão do seu CSS antigo */
+        flex: 1;
+    }
+
+/* Cabeçalho do Modal */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+    .btn-close:hover {
+        color: var(--danger);
+    }
+
+/* Corpo e Ações */
+.modal-body {
+    width: 100%;
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+
