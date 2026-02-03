@@ -5,16 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Financeiro 2026</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body oncontextmenu="return false"> 
 <div id="mainContainer" class="container" style="display: none;"> 
   <header>
     <h1>Finanças 2026</h1>
     <div class="toolbar">
-      <button class="btn btn-accent" id="btnAddExpense">+ Despesa</button>
-      <button class="btn" id="btnSettings">⚙️ Grupos</button>
-      <button class="btn" style="color:var(--text-muted)" id="btnLogout">Sair</button>
-      <button class="btn" style="color:var(--danger)" id="btnReset">Limpar Tudo</button>
+      <button class="btn btn-accent" id="btnAddExpense">
+        <i data-lucide="plus-circle"></i> Despesa
+      </button>
+      <button class="btn" id="btnSettings">
+        <i data-lucide="settings"></i> Grupos
+      </button>
+      <button class="btn btn-muted" id="btnLogout">
+        <i data-lucide="log-out"></i> Sair
+      </button>
+      <button class="btn btn-danger" id="btnReset">
+        <i data-lucide="trash-2"></i> Limpar Tudo
+      </button>
     </div>
   </header>
 
@@ -29,45 +38,38 @@
 
   <div class="grid-info">
     <div class="card"><h4>Receita Anual</h4><div id="totalRenda" class="value">R$ 0,00</div></div>
-    <div class="card"><h4>Despesa Anual</h4><div id="totalGasto" class="value" style="color: var(--danger)">R$ 0,00</div></div>
-    <div class="card"><h4>Saldo Atual</h4><div id="mediaSaldo" class="value" style="color: var(--success)">R$ 0,00</div></div>
+    <div class="card"><h4>Despesa Anual</h4><div id="totalGasto" class="value text-danger">R$ 0,00</div></div>
+    <div class="card"><h4>Saldo Atual</h4><div id="mediaSaldo" class="value text-success">R$ 0,00</div></div>
     <div class="card"><h4>Uso da Renda</h4><div id="mediaPerc" class="value">0%</div></div>
   </div>
 </div>
 
 <div id="settingsModal" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
-        <div class="modal-header" style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-size: 1.25rem;">Gerenciar Categorias</h2>
-            <button class="btn-close" id="btnCloseSettings" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:var(--text-muted)">&times;</button>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Gerenciar Categorias</h2>
+            <button class="btn-close" data-target="settingsModal">&times;</button>
         </div>
-
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; text-align: left; width: 100%;">
-            Adicione ou remova os grupos que aparecerão na sua planilha.
-        </p>
-
-        <div id="presetsList" class="category-item"></div>
-
+        <p class="modal-desc">Adicione ou remova os grupos da sua planilha.</p>
+        <div id="presetsList" class="category-list"></div>
         <div class="category-input-group">
-            <input type="text" id="newPresetName" class="auth-input" placeholder="Ex: Assinaturas, Lazer...">
-            <button class="btn btn-accent" id="btnAddNewPreset" style="padding: 0 20px;">Adicionar</button>
+            <input type="text" id="newPresetName" class="auth-input" placeholder="Novo grupo...">
+            <button class="btn btn-accent" id="btnAddNewPreset">Adicionar</button>
         </div>
     </div>
 </div>
 
-<<div id="dataModal" class="modal">
+<div id="dataModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
       <h2 id="dataModalTitle">Lançar Despesa</h2>
-      <button class="btn-close" id="btnCloseDataX">&times;</button>
+      <button class="btn-close" data-target="dataModal">&times;</button>
     </div>
-    
     <div class="modal-body">
       <input type="text" id="inputExpenseName" class="auth-input" placeholder="Nome (ex: Aluguel)">
       <select id="inputExpenseCategory" class="auth-input"></select>
-      
       <div class="modal-actions">
-        <button id="btnSaveData" class="btn btn-accent">Salvar</button>
+        <button id="btnSaveData" class="btn btn-accent">Salvar Alterações</button>
         <button id="btnCloseData" class="btn">Cancelar</button>
       </div>
     </div>
