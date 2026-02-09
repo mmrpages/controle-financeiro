@@ -10,7 +10,7 @@ const months = [
 const brFormatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-};
+});
 
 let state = {
     presets: ["Fixa", "Variável", "Lazer", "Saúde", "Moradia", "Transporte", "Cartão de Crédito", "Outros"],
