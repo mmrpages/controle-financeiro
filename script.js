@@ -257,7 +257,7 @@ function buildTableHeader(head, groups) {
         headerRow1 += `<th colspan="${groups[type]}" class="group-header">${type}</th>`;
     });
 
-    headerRow1 += '</tr>';
+    headerRow1 += '<th colspan="3"></th><th></th></tr>'; // 3: Total/Saldo/%  + 1: Ações
 
     let headerRow2 = '<tr><th>Mês</th><th>Renda</th>';
 
@@ -274,7 +274,7 @@ function buildTableHeader(head, groups) {
     `;
     });
 
-    headerRow2 += '<th>Total</th><th>Saldo</th><th>%</th></tr>';
+    headerRow2 += '<th>Total</th><th>Saldo</th><th>%</th><th>Ações</th></tr>';
 
     head.innerHTML = headerRow1 + headerRow2;
 }
@@ -324,6 +324,17 @@ function buildTableBody(body) {
             <div class="usage-bar" id="bar-${monthIndex}"></div>
             <div class="usage-text" id="text-${monthIndex}">0%</div>
           </div>
+        </td>
+
+        <td>
+          <button
+            type="button"
+            class="btn btn-secondary btn-small"
+            onclick="clearMonth(${monthIndex})"
+            title="Limpar despesas deste mês"
+          >
+            Limpar mês
+          </button>
         </td>
       </tr>
     `;
@@ -505,6 +516,39 @@ window.resetAll = async () => {
         } finally {
             window.hideLoading?.();
         }
+    }
+};
+
+window.clearMonth = async (monthIndex) => {
+    if (!months[monthIndex]) return;
+
+    const confirmMsg =
+        `Limpar todas as despesas de ${months[monthIndex]}?\n` +
+        `A renda do mês será mantida.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        window.showLoading?.();
+
+        // Zera apenas as despesas do mês, mantém income
+        state.data[monthIndex].expenses = {};
+
+        // Atualiza inputs daquele mês
+        state.categories.forEach(cat => {
+            const el = document.getElementById(`e-${monthIndex}-${cat.id}`);
+            if (el) el.value = '';
+        });
+
+        // Recalcula totais e salva
+        calculate();
+        await window.saveToFirebase();
+        window.showToast?.(`Despesas de ${months[monthIndex]} limpas`, 'info');
+    } catch (error) {
+        console.error('Erro ao limpar mês:', error);
+        window.showToast?.('Erro ao limpar despesas do mês', 'error');
+    } finally {
+        window.hideLoading?.();
     }
 };
 
