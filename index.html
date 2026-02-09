@@ -22,9 +22,9 @@
   <header>
     <h1>Finanças 2026</h1>
     <div class="toolbar">
-      <button class="btn btn-accent" onclick="addExpense()">+ Despesa</button>
-      <button class="btn btn-secondary" onclick="logout()">Sair</button>
-      <button class="btn btn-danger" onclick="resetAll()">Limpar Tudo</button>
+      <button id="btnAddExpense" class="btn btn-accent">+ Despesa</button>
+      <button id="btnLogout" class="btn btn-secondary">Sair</button>
+      <button id="btnResetAll" class="btn btn-danger">Limpar Tudo</button>
     </div>
   </header>
 
@@ -65,7 +65,7 @@
       <canvas id="categoryChart"></canvas>
     </div>
     <div id="modalTotal" class="modal-total"></div>
-    <button class="btn btn-block" onclick="closeChartModal()">Fechar</button>
+    <button id="btnCloseChart" class="btn btn-block">Fechar</button>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
       <select id="inputExpenseCategory" class="input"></select>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeDataModal()">Cancelar</button>
+      <button id="btnCancelModal" class="btn btn-secondary">Cancelar</button>
       <button class="btn btn-accent" id="btnSaveData">Salvar</button>
     </div>
   </div>

@@ -501,11 +501,74 @@ function initSaveButton() {
   }
 }
 
-// Tenta associar o botão imediatamente e quando o DOM carregar
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSaveButton);
-} else {
+// Inicializa todos os botões da interface
+function initButtons() {
+  console.log('🔘 Inicializando botões...');
+  
+  // Botão + Despesa
+  const btnAddExpense = document.getElementById('btnAddExpense');
+  if (btnAddExpense) {
+    btnAddExpense.onclick = () => {
+      console.log('🆕 Botão + Despesa clicado');
+      window.addExpense();
+    };
+    console.log('✅ Botão + Despesa associado');
+  }
+  
+  // Botão Sair (será sobrescrito pelo Firebase auth)
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.onclick = () => {
+      if (window.logout) {
+        window.logout();
+      } else {
+        console.warn('⚠️ Função logout não disponível');
+      }
+    };
+    console.log('✅ Botão Sair associado');
+  }
+  
+  // Botão Limpar Tudo
+  const btnResetAll = document.getElementById('btnResetAll');
+  if (btnResetAll) {
+    btnResetAll.onclick = () => {
+      console.log('🗑️ Botão Limpar Tudo clicado');
+      window.resetAll();
+    };
+    console.log('✅ Botão Limpar Tudo associado');
+  }
+  
+  // Botão Salvar Despesa
   initSaveButton();
+  
+  // Botão Cancelar Modal
+  const btnCancelModal = document.getElementById('btnCancelModal');
+  if (btnCancelModal) {
+    btnCancelModal.onclick = () => {
+      console.log('❌ Botão Cancelar clicado');
+      window.closeDataModal();
+    };
+    console.log('✅ Botão Cancelar associado');
+  }
+  
+  // Botão Fechar Gráfico
+  const btnCloseChart = document.getElementById('btnCloseChart');
+  if (btnCloseChart) {
+    btnCloseChart.onclick = () => {
+      console.log('❌ Fechar gráfico clicado');
+      window.closeChartModal();
+    };
+    console.log('✅ Botão Fechar Gráfico associado');
+  }
+  
+  console.log('✅ Todos os botões inicializados');
+}
+
+// Tenta associar os botões imediatamente e quando o DOM carregar
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initButtons);
+} else {
+  initButtons();
 }
 
 // ===== RESET =====
