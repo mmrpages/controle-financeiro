@@ -287,12 +287,12 @@ function buildTableBody(body) {
             const expenseValue = state.data[monthIndex].expenses[cat.id];
             return `
         <td>
-          <input 
+          <input
             id="e-${monthIndex}-${cat.id}" 
             class="input" 
             value="${expenseValue ? formatCurrency(expenseValue) : ''}" 
             oninput="debouncedCalculate()" 
-            onblur="save()"
+            onblur="this.value = formatCurrency(parseVal(this.value)); save()"
             placeholder="R$ 0,00"
           >
         </td>
@@ -302,13 +302,13 @@ function buildTableBody(body) {
         return `
       <tr>
         <td class="month-label" onclick="showMonthChart(${monthIndex})">${monthName}</td>
-        <td>
-          <input 
+         <td>
+          <input
             id="inc-${monthIndex}" 
             class="input" 
             value="${incomeValue ? formatCurrency(incomeValue) : ''}" 
             oninput="debouncedCalculate()" 
-            onblur="save()"
+            onblur="this.value = formatCurrency(parseVal(this.value)); save()"
             placeholder="R$ 0,00"
           >
         </td>
