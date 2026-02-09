@@ -14,8 +14,6 @@
     <h1>Finanças 2026</h1>
     <div class="toolbar">
       <button class="btn btn-accent" onclick="addExpense()">+ Despesa</button>
-      <button class="btn" onclick="exportData()">Exportar</button>
-      <button class="btn" onclick="importData()">Importar</button>
       <button class="btn" style="color:var(--text-muted)" onclick="logout()">Sair</button>
       <button class="btn" style="color:var(--danger)" onclick="resetAll()">Limpar Tudo</button>
     </div>
@@ -81,19 +79,14 @@
 </div>
 
 <script type="module">
+  // Importa a configuração do novo ficheiro
+  import firebaseConfig from './config.js'; 
+  
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCEhMZcmsklTArvDk2AMDg3Vm6RxzE2a8c",
-    authDomain: "mmrpages-controle-financeiro.firebaseapp.com",
-    projectId: "mmrpages-controle-financeiro",
-    storageBucket: "mmrpages-controle-financeiro.firebasestorage.app",
-    messagingSenderId: "415288375426",
-    appId: "1:415288375426:web:fd5e211ca0bc6324da9c9b"
-  };
-
+  // Inicializa o Firebase usando a config importada
   const app = initializeApp(firebaseConfig);
   window.auth = getAuth(app);
   window.db = getFirestore(app);
@@ -117,6 +110,7 @@
     }
   }
 </script>
+
 <script src="script.js" defer></script>
 </body>
 </html>
