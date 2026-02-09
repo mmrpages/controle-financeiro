@@ -695,6 +695,8 @@ window.showMonthChart = (monthIndex) => {
         }
     });
 
+}
+
     window.closeChartModal = () => {
         document.getElementById('chartModal').style.display = 'none';
         if (chartInstance) {
@@ -720,4 +722,3 @@ window.showMonthChart = (monthIndex) => {
     } else {
         build();
     }
-}
