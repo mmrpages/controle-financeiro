@@ -470,18 +470,23 @@ window.showMonthChart = (monthIndex) => {
   const monthData = state.data[monthIndex];
   const monthName = months[monthIndex];
   
-  const labels = [];
-  const data = [];
-  const colors = [];
+  // Agrupa despesas por categoria (tipo)
+  const categoryTotals = {};
   
   state.categories.forEach(cat => {
     const value = monthData.expenses[cat.id] || 0;
     if (value > 0) {
-      labels.push(cat.name);
-      data.push(value);
-      colors.push(getRandomColor());
+      // Agrupa pelo tipo (categoria)
+      if (!categoryTotals[cat.type]) {
+        categoryTotals[cat.type] = 0;
+      }
+      categoryTotals[cat.type] += value;
     }
   });
+  
+  // Converte objeto em arrays para o gráfico
+  const labels = Object.keys(categoryTotals);
+  const data = Object.values(categoryTotals);
   
   if (data.length === 0) {
     window.showToast('Nenhuma despesa registrada neste mês', 'info');
@@ -490,7 +495,21 @@ window.showMonthChart = (monthIndex) => {
   
   const total = data.reduce((sum, val) => sum + val, 0);
   
-  document.getElementById('modalTitle').textContent = `Despesas - ${monthName}`;
+  // Cores fixas por categoria para consistência
+  const categoryColors = {
+    'Fixa': '#0ea5e9',
+    'Variável': '#8b5cf6',
+    'Lazer': '#ec4899',
+    'Saúde': '#10b981',
+    'Moradia': '#f59e0b',
+    'Transporte': '#3b82f6',
+    'Cartão de Crédito': '#ef4444',
+    'Outros': '#64748b'
+  };
+  
+  const colors = labels.map(label => categoryColors[label] || getRandomColor());
+  
+  document.getElementById('modalTitle').textContent = `Despesas por Categoria - ${monthName}`;
   document.getElementById('modalTotal').textContent = `Total: ${formatCurrency(total)}`;
   
   const modal = document.getElementById('chartModal');
@@ -509,7 +528,7 @@ window.showMonthChart = (monthIndex) => {
       datasets: [{
         data: data,
         backgroundColor: colors,
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: '#fff'
       }]
     },
@@ -518,7 +537,14 @@ window.showMonthChart = (monthIndex) => {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: 'bottom'
+          position: 'bottom',
+          labels: {
+            padding: 15,
+            font: {
+              size: 12,
+              weight: 'bold'
+            }
+          }
         },
         tooltip: {
           callbacks: {
@@ -528,6 +554,19 @@ window.showMonthChart = (monthIndex) => {
               const percentage = ((context.parsed / total) * 100).toFixed(1);
               return `${label}: ${value} (${percentage}%)`;
             }
+          },
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14
+          },
+          bodyFont: {
+            size: 13
+          }
+        }
+      }
+    }
+  });
           }
         }
       }
