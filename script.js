@@ -523,18 +523,22 @@ window.clearMonth = async (monthIndex) => {
     if (!months[monthIndex]) return;
 
     const confirmMsg =
-        `Limpar todas as despesas de ${months[monthIndex]}?\n` +
-        `A renda do mês será mantida.`;
+        `Limpar TODOS os dados de ${months[monthIndex]}?\n` +
+        `Renda e despesas serão zeradas.`;
 
     if (!confirm(confirmMsg)) return;
 
     try {
         window.showLoading?.();
 
-        // Zera apenas as despesas do mês, mantém income
+        // Zera RINDA e DESPESAS do mês
+        state.data[monthIndex].income = 0;
         state.data[monthIndex].expenses = {};
 
         // Atualiza inputs daquele mês
+        const incomeEl = document.getElementById(`inc-${monthIndex}`);
+        if (incomeEl) incomeEl.value = '';
+
         state.categories.forEach(cat => {
             const el = document.getElementById(`e-${monthIndex}-${cat.id}`);
             if (el) el.value = '';
@@ -543,10 +547,10 @@ window.clearMonth = async (monthIndex) => {
         // Recalcula totais e salva
         calculate();
         await window.saveToFirebase();
-        window.showToast?.(`Despesas de ${months[monthIndex]} limpas`, 'info');
+        window.showToast?.(`Mês ${months[monthIndex]} zerado completamente`, 'info');
     } catch (error) {
         console.error('Erro ao limpar mês:', error);
-        window.showToast?.('Erro ao limpar despesas do mês', 'error');
+        window.showToast?.('Erro ao limpar dados do mês', 'error');
     } finally {
         window.hideLoading?.();
     }
