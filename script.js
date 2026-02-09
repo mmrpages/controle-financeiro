@@ -3,6 +3,8 @@
  * Melhorias: Validação, Debounce, Tratamento de Erros, Performance
  */
 
+window.handleBlur = handleBlur;
+
 const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -250,6 +252,21 @@ function build() {
     console.log('✅ build() concluído com sucesso');
 }
 
+function handleBlur(input) {
+    const rawValue = input.value.trim();
+
+    // Se vazio ou só espaços, mantém vazio
+    if (!rawValue) {
+        input.value = '';
+        return;
+    }
+
+    // Se tem valor, formata e salva
+    const parsed = parseVal(rawValue);
+    input.value = formatCurrency(parsed);
+    save(); // Salva no Firebase
+}
+
 function buildTableHeader(head, groups) {
     let headerRow1 = '<tr><th colspan="2" style="border:none"></th>';
 
@@ -288,14 +305,14 @@ function buildTableBody(body) {
       const inputValue = expenseValue > 0 ? formatCurrency(expenseValue) : '';
       return `
         <td>
-          <input 
-            id="e-${monthIndex}-${cat.id}" 
-            class="input" 
-            value="${inputValue}" 
-            oninput="debouncedCalculate()" 
-            onblur="this.value = formatCurrency(parseVal(this.value)); save()"
-            placeholder="R$ 0,00"
-          >
+            <input
+              id="e-${monthIndex}-${cat.id}" 
+              class="input" 
+              value="${inputValue}" 
+              oninput="debouncedCalculate()" 
+              onblur="handleBlur(this)"
+              placeholder="R$ 0,00"
+            />
         </td>
       `;
     }).join('');
@@ -306,14 +323,14 @@ function buildTableBody(body) {
       <tr>
         <td class="month-label" onclick="showMonthChart(${monthIndex})">${monthName}</td>
         <td>
-          <input 
-            id="inc-${monthIndex}" 
-            class="input" 
-            value="${incomeValueDisplay}" 
-            oninput="debouncedCalculate()" 
-            onblur="this.value = formatCurrency(parseVal(this.value)); save()"
-            placeholder="R$ 0,00"
-          >
+            <input
+              id="inc-${monthIndex}" 
+              class="input" 
+              value="${incomeValueDisplay}" 
+              oninput="debouncedCalculate()" 
+              onblur="handleBlur(this)"
+              placeholder="R$ 0,00"
+        />
         </td>
         ${expenseCells}
         <td>
@@ -342,7 +359,6 @@ function buildTableBody(body) {
     `;
   }).join('');
 }
-
 
 const debouncedCalculate = debounce(calculate, 300);
 window.debouncedCalculate = debouncedCalculate;
