@@ -110,48 +110,64 @@
       window.location.href = 'login.html';
     } else {
       try {
-        window.showLoading();
+        // Mostra loading se a função já existir
+        if (window.showLoading) window.showLoading();
+        
         await loadUserData(user.uid);
         document.querySelector('.container').style.display = 'block';
-        window.hideLoading();
+        
+        // Esconde loading se a função já existir
+        if (window.hideLoading) window.hideLoading();
         
         // Define função de logout
         window.logout = async () => {
           try {
-            window.showLoading();
+            if (window.showLoading) window.showLoading();
             await signOut(window.auth);
             window.location.href = 'login.html';
           } catch (error) {
-            window.showToast('Erro ao sair: ' + error.message, 'error');
-            window.hideLoading();
+            if (window.showToast) window.showToast('Erro ao sair: ' + error.message, 'error');
+            if (window.hideLoading) window.hideLoading();
           }
         };
       } catch (error) {
-        window.showToast('Erro ao carregar dados: ' + error.message, 'error');
-        window.hideLoading();
+        console.error('Erro ao carregar:', error);
+        if (window.showToast) {
+          window.showToast('Erro ao carregar dados: ' + error.message, 'error');
+        } else {
+          alert('Erro ao carregar dados: ' + error.message);
+        }
+        if (window.hideLoading) window.hideLoading();
       }
     }
   });
 
   async function loadUserData(uid) {
     try {
+      console.log('📊 Carregando dados do usuário:', uid);
       const docRef = doc(window.db, "usuarios", uid);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
+        console.log('✅ Dados encontrados no Firebase');
         window.updateStateFromFirebase(docSnap.data());
       } else {
-        console.log('Novo usuário - inicializando dados padrão');
+        console.log('🆕 Novo usuário - inicializando dados padrão');
         // Salva estado inicial no Firebase
-        await window.saveToFirebase();
+        if (window.saveToFirebase) {
+          await window.saveToFirebase();
+        } else {
+          console.warn('⚠️ saveToFirebase não está disponível ainda');
+        }
       }
+      console.log('✅ Dados carregados com sucesso!');
     } catch (error) {
-      console.error('Erro ao carregar dados do usuário:', error);
+      console.error('❌ Erro ao carregar dados do usuário:', error);
       throw error;
     }
   }
 </script>
 
-<script src="script.js" defer></script>
+<script src="script.js"></script>
 </body>
 </html>

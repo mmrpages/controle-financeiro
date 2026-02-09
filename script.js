@@ -106,10 +106,14 @@ window.updateStateFromFirebase = (newData) => {
       settings: newData.settings || { showTotals: {} }
     };
     build();
-    window.showToast('Dados carregados com sucesso!', 'success');
+    if (window.showToast) {
+      window.showToast('Dados carregados com sucesso!', 'success');
+    }
   } catch (error) {
     console.error('Erro ao atualizar state:', error);
-    window.showToast('Erro ao carregar dados', 'error');
+    if (window.showToast) {
+      window.showToast('Erro ao carregar dados', 'error');
+    }
   }
 };
 
@@ -227,7 +231,9 @@ function build() {
   const body = document.getElementById('tableBody');
   
   if (!head || !body) {
-    console.warn('Elementos da tabela não encontrados');
+    console.warn('Elementos da tabela não encontrados - aguardando DOM');
+    // Se os elementos não existem ainda, tenta novamente em 100ms
+    setTimeout(build, 100);
     return;
   }
 
