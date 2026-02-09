@@ -93,9 +93,6 @@
   </div>
 </div>
 
-<!-- Carrega o script.js PRIMEIRO para garantir que as funções existam -->
-<script src="script.js"></script>
-
 <script type="module">
   import firebaseConfig from './config.js'; 
   
@@ -108,26 +105,16 @@
   window.db = getFirestore(app);
   window.fbOps = { doc, setDoc, getDoc };
 
-  console.log('🔥 Firebase inicializado');
-
   onAuthStateChanged(window.auth, async (user) => {
     if (!user) {
-      console.log('👤 Nenhum usuário - redirecionando para login');
       window.location.href = 'login.html';
     } else {
-      console.log('✅ Usuário autenticado:', user.email);
       try {
         // Mostra loading se a função já existir
         if (window.showLoading) window.showLoading();
         
         await loadUserData(user.uid);
-        
-        // Mostra o container
-        const container = document.querySelector('.container');
-        if (container) {
-          container.style.display = 'block';
-          console.log('✅ Container exibido');
-        }
+        document.querySelector('.container').style.display = 'block';
         
         // Esconde loading se a função já existir
         if (window.hideLoading) window.hideLoading();
@@ -144,7 +131,7 @@
           }
         };
       } catch (error) {
-        console.error('❌ Erro ao carregar:', error);
+        console.error('Erro ao carregar:', error);
         if (window.showToast) {
           window.showToast('Erro ao carregar dados: ' + error.message, 'error');
         } else {
@@ -163,28 +150,15 @@
       
       if (docSnap.exists()) {
         console.log('✅ Dados encontrados no Firebase');
-        const data = docSnap.data();
-        console.log('📦 Dados recebidos:', data);
-        
-        // Aguarda um pouco para garantir que o DOM está pronto
-        setTimeout(() => {
-          if (window.updateStateFromFirebase) {
-            window.updateStateFromFirebase(data);
-          } else {
-            console.warn('⚠️ updateStateFromFirebase não disponível, tentando novamente...');
-            setTimeout(() => window.updateStateFromFirebase(data), 500);
-          }
-        }, 100);
+        window.updateStateFromFirebase(docSnap.data());
       } else {
         console.log('🆕 Novo usuário - inicializando dados padrão');
-        // Aguarda para garantir que saveToFirebase existe
-        setTimeout(async () => {
-          if (window.saveToFirebase) {
-            await window.saveToFirebase();
-          } else {
-            console.warn('⚠️ saveToFirebase não está disponível ainda');
-          }
-        }, 100);
+        // Salva estado inicial no Firebase
+        if (window.saveToFirebase) {
+          await window.saveToFirebase();
+        } else {
+          console.warn('⚠️ saveToFirebase não está disponível ainda');
+        }
       }
       console.log('✅ Dados carregados com sucesso!');
     } catch (error) {
@@ -194,5 +168,6 @@
   }
 </script>
 
+<script src="script.js"></script>
 </body>
 </html>
