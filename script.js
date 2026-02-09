@@ -280,33 +280,36 @@ function buildTableHeader(head, groups) {
 }
 
 function buildTableBody(body) {
-    body.innerHTML = months.map((monthName, monthIndex) => {
-        const incomeValue = state.data[monthIndex].income;
-
-        const expenseCells = state.categories.map(cat => {
-            const expenseValue = state.data[monthIndex].expenses[cat.id];
-            return `
+  body.innerHTML = months.map((monthName, monthIndex) => {
+    const incomeValue = state.data[monthIndex].income;
+    
+    const expenseCells = state.categories.map(cat => {
+      const expenseValue = state.data[monthIndex].expenses[cat.id];
+      const inputValue = expenseValue > 0 ? formatCurrency(expenseValue) : '';
+      return `
         <td>
-          <input
+          <input 
             id="e-${monthIndex}-${cat.id}" 
             class="input" 
-            value="${expenseValue ? formatCurrency(expenseValue) : ''}" 
+            value="${inputValue}" 
             oninput="debouncedCalculate()" 
             onblur="this.value = formatCurrency(parseVal(this.value)); save()"
             placeholder="R$ 0,00"
           >
         </td>
       `;
-        }).join('');
-
-        return `
+    }).join('');
+    
+    const incomeValueDisplay = incomeValue > 0 ? formatCurrency(incomeValue) : '';
+    
+    return `
       <tr>
         <td class="month-label" onclick="showMonthChart(${monthIndex})">${monthName}</td>
-         <td>
-          <input
+        <td>
+          <input 
             id="inc-${monthIndex}" 
             class="input" 
-            value="${incomeValue ? formatCurrency(incomeValue) : ''}" 
+            value="${incomeValueDisplay}" 
             oninput="debouncedCalculate()" 
             onblur="this.value = formatCurrency(parseVal(this.value)); save()"
             placeholder="R$ 0,00"
@@ -325,21 +328,21 @@ function buildTableBody(body) {
             <div class="usage-text" id="text-${monthIndex}">0%</div>
           </div>
         </td>
-
         <td>
-          <button
-            type="button"
-            class="btn btn-secondary btn-small"
+          <button 
+            type="button" 
+            class="btn btn-secondary btn-small" 
             onclick="clearMonth(${monthIndex})"
-            title="Limpar despesas deste mês"
+            title="Limpar dados deste mês"
           >
             Limpar mês
           </button>
         </td>
       </tr>
     `;
-    }).join('');
+  }).join('');
 }
+
 
 const debouncedCalculate = debounce(calculate, 300);
 window.debouncedCalculate = debouncedCalculate;
