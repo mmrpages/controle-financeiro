@@ -96,6 +96,9 @@ window.showToast = (message, type = 'info') => {
 // ===== SINCRONIZAÇÃO COM FIREBASE =====
 
 window.updateStateFromFirebase = (newData) => {
+  console.log('🔄 updateStateFromFirebase chamado');
+  console.log('📦 Dados recebidos:', newData);
+  
   try {
     state = {
       ...state,
@@ -105,12 +108,19 @@ window.updateStateFromFirebase = (newData) => {
       data: newData.data || state.data,
       settings: newData.settings || { showTotals: {} }
     };
+    
+    console.log('✅ State atualizado:', state);
+    console.log('🏗️ Chamando build()...');
+    
     build();
+    
+    console.log('✅ build() concluído');
+    
     if (window.showToast) {
       window.showToast('Dados carregados com sucesso!', 'success');
     }
   } catch (error) {
-    console.error('Erro ao atualizar state:', error);
+    console.error('❌ Erro ao atualizar state:', error);
     if (window.showToast) {
       window.showToast('Erro ao carregar dados', 'error');
     }
@@ -227,16 +237,22 @@ function updateSummary(totalReceita, totalGasto) {
 // ===== CONSTRUÇÃO DA TABELA =====
 
 function build() {
+  console.log('🏗️ build() iniciado');
+  
   const head = document.getElementById('tableHead');
   const body = document.getElementById('tableBody');
   
+  console.log('📍 Elementos encontrados:', { head: !!head, body: !!body });
+  
   if (!head || !body) {
-    console.warn('Elementos da tabela não encontrados - aguardando DOM');
+    console.warn('⚠️ Elementos da tabela não encontrados - aguardando DOM');
     // Se os elementos não existem ainda, tenta novamente em 100ms
     setTimeout(build, 100);
     return;
   }
 
+  console.log('📊 Categorias:', state.categories.length);
+  
   // Ordena categorias por tipo
   state.categories.sort((a, b) => a.type.localeCompare(b.type));
   
@@ -246,6 +262,8 @@ function build() {
     groups[cat.type] = (groups[cat.type] || 0) + 1;
   });
 
+  console.log('📁 Grupos:', groups);
+
   // Constrói cabeçalho
   buildTableHeader(head, groups);
   
@@ -254,6 +272,8 @@ function build() {
   
   // Calcula valores
   calculate();
+  
+  console.log('✅ build() concluído com sucesso');
 }
 
 function buildTableHeader(head, groups) {
