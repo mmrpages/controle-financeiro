@@ -1,198 +1,203 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Financeiro 2026 - Sky Edition</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Financeiro 2026 - Sky Edition</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js é usado para o gráfico de pizza por mês -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="spinner"></div>
-  <p>Carregando...</p>
-</div>
-
-<!-- Toast Notification -->
-<div id="toast" class="toast"></div>
-
-<div class="container" style="display: none;"> 
-  <header>
-    <h1>Finanças 2026</h1>
-    <div class="toolbar">
-      <button id="btnAddExpense" class="btn btn-accent">+ Despesa</button>
-      <button id="btnLogout" class="btn btn-secondary">Sair</button>
-      <button id="btnResetAll" class="btn btn-danger">Limpar Tudo</button>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Carregando...</p>
     </div>
-  </header>
 
-  <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead id="tableHead"></thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <div class="container" style="display: none;">
+        <header>
+            <h1>Finanças 2026</h1>
+            <div class="toolbar">
+                <button class="btn btn-accent" type="button" onclick="addExpense()">+ Despesa</button>
+                <button class="btn btn-secondary" type="button" onclick="logout()">Sair</button>
+                <button class="btn btn-danger" type="button" onclick="resetAll()">Limpar Tudo</button>
+            </div>
+        </header>
+
+        <div class="table-card">
+            <div class="table-wrap">
+                <table>
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid-info">
+            <div class="card">
+                <h4>Receita Anual</h4>
+                <div id="totalRenda" class="value">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h4>Despesa Anual</h4>
+                <div id="totalGasto" class="value value-danger">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h4>Média Saldo</h4>
+                <div id="mediaSaldo" class="value value-success">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h4>Uso da Renda</h4>
+                <div id="mediaPerc" class="value">0%</div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="grid-info">
-    <div class="card">
-      <h4>Receita Anual</h4>
-      <div id="totalRenda" class="value">R$ 0,00</div>
+    <!-- Modal de Gráfico por Categoria -->
+    <div id="chartModal" class="modal" aria-hidden="true">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="modalTitle" style="margin-bottom: 20px;"></h2>
+            <div class="chart-container" style="position: relative; height:350px; width:100%">
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div id="modalTotal" class="modal-total"></div>
+            <button class="btn btn-block" type="button" onclick="closeChartModal()">Fechar</button>
+        </div>
     </div>
-    <div class="card">
-      <h4>Despesa Anual</h4>
-      <div id="totalGasto" class="value value-danger">R$ 0,00</div>
+
+    <!-- Modal de Nova/Editar Despesa -->
+    <div id="dataModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <h2 id="dataModalTitle">Nova Despesa</h2>
+            <div class="form-group">
+                <label for="inputExpenseName">Nome da Despesa</label>
+                <input type="text"
+                       id="inputExpenseName"
+                       class="input"
+                       placeholder="Ex: Internet"
+                       maxlength="50">
+
+                <label for="inputExpenseCategory">Categoria</label>
+                <select id="inputExpenseCategory" class="input"></select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" onclick="closeDataModal()">Cancelar</button>
+                <button class="btn btn-accent" type="button" id="btnSaveData">Salvar</button>
+            </div>
+        </div>
     </div>
-    <div class="card">
-      <h4>Média Saldo</h4>
-      <div id="mediaSaldo" class="value value-success">R$ 0,00</div>
-    </div>
-    <div class="card">
-      <h4>Uso da Renda</h4>
-      <div id="mediaPerc" class="value">0%</div>
-    </div>
-  </div>
-</div>
 
-<!-- Modal de Gráfico por Categoria -->
-<div id="chartModal" class="modal">
-  <div class="modal-content" style="max-width: 600px;">
-    <h2 id="modalTitle" style="margin-bottom: 20px;"></h2>
-    <div class="chart-container" style="position: relative; height:350px; width:100%">
-      <canvas id="categoryChart"></canvas>
-    </div>
-    <div id="modalTotal" class="modal-total"></div>
-    <button id="btnCloseChart" class="btn btn-block">Fechar</button>
-  </div>
-</div>
+    <!-- script.js expõe funções globais (addExpense, resetAll, modais, build etc.) -->
+    <script src="script.js"></script>
 
-<!-- Modal de Nova/Editar Despesa -->
-<div id="dataModal" class="modal">
-  <div class="modal-content">
-    <h2 id="dataModalTitle">Nova Despesa</h2>
-    <div class="form-group">
-      <label for="inputExpenseName">Nome da Despesa</label>
-      <input 
-        type="text" 
-        id="inputExpenseName" 
-        class="input" 
-        placeholder="Ex: Internet"
-        maxlength="50"
-      >
-      
-      <label for="inputExpenseCategory">Categoria</label>
-      <select id="inputExpenseCategory" class="input"></select>
-    </div>
-    <div class="modal-actions">
-      <button id="btnCancelModal" class="btn btn-secondary">Cancelar</button>
-      <button class="btn btn-accent" id="btnSaveData">Salvar</button>
-    </div>
-  </div>
-</div>
+    <!-- Módulo de inicialização Firebase + Auth + Firestore -->
+    <script type="module">
+        import firebaseConfig from './config.js';
 
-<!-- Carrega o script.js PRIMEIRO para garantir que as funções existam -->
-<script src="script.js"></script>
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-<script type="module">
-  import firebaseConfig from './config.js'; 
-  
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+        const app = initializeApp(firebaseConfig);
+        window.auth = getAuth(app);
+        window.db = getFirestore(app);
+        window.fbOps = { doc, setDoc, getDoc };
 
-  const app = initializeApp(firebaseConfig);
-  window.auth = getAuth(app);
-  window.db = getFirestore(app);
-  window.fbOps = { doc, setDoc, getDoc };
+        console.log('🔥 Firebase inicializado');
 
-  console.log('🔥 Firebase inicializado');
+        onAuthStateChanged(window.auth, async (user) => {
+            if (!user) {
+                console.log('👤 Nenhum usuário - redirecionando para login');
+                window.location.href = 'login.html';
+                return;
+            }
 
-  onAuthStateChanged(window.auth, async (user) => {
-    if (!user) {
-      console.log('👤 Nenhum usuário - redirecionando para login');
-      window.location.href = 'login.html';
-    } else {
-      console.log('✅ Usuário autenticado:', user.email);
-      try {
-        // Mostra loading se a função já existir
-        if (window.showLoading) window.showLoading();
-        
-        await loadUserData(user.uid);
-        
-        // Mostra o container
-        const container = document.querySelector('.container');
-        if (container) {
-          container.style.display = 'block';
-          console.log('✅ Container exibido');
+            console.log('✅ Usuário autenticado:', user.email);
+
+            try {
+                if (window.showLoading) window.showLoading();
+
+                await loadUserData(user.uid);
+
+                const container = document.querySelector('.container');
+                if (container) {
+                    container.style.display = 'block';
+                    console.log('✅ Container exibido');
+                }
+
+                if (window.hideLoading) window.hideLoading();
+
+                // Define função de logout global
+                window.logout = async () => {
+                    try {
+                        if (window.showLoading) window.showLoading();
+                        await signOut(window.auth);
+                        window.location.href = 'login.html';
+                    } catch (error) {
+                        if (window.showToast) {
+                            window.showToast('Erro ao sair: ' + error.message, 'error');
+                        }
+                        if (window.hideLoading) window.hideLoading();
+                    }
+                };
+            } catch (error) {
+                console.error('❌ Erro ao carregar:', error);
+                if (window.showToast) {
+                    window.showToast('Erro ao carregar dados: ' + error.message, 'error');
+                } else {
+                    alert('Erro ao carregar dados: ' + error.message);
+                }
+                if (window.hideLoading) window.hideLoading();
+            }
+        });
+
+        async function loadUserData(uid) {
+            try {
+                console.log('📊 Carregando dados do usuário:', uid);
+                const docRef = doc(window.db, "usuarios", uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    console.log('✅ Dados encontrados no Firebase');
+                    const data = docSnap.data();
+                    console.log('📦 Dados recebidos:', data);
+
+                    // Aguarda um pouco para garantir que o DOM e script.js estão prontos
+                    setTimeout(() => {
+                        if (typeof window.updateStateFromFirebase === 'function') {
+                            window.updateStateFromFirebase(data);
+                        } else {
+                            console.warn('⚠️ updateStateFromFirebase não disponível, tentando novamente...');
+                            setTimeout(() => {
+                                if (typeof window.updateStateFromFirebase === 'function') {
+                                    window.updateStateFromFirebase(data);
+                                }
+                            }, 500);
+                        }
+                    }, 100);
+                } else {
+                    console.log('🆕 Novo usuário - inicializando dados padrão');
+                    // Salva estado inicial padrão
+                    setTimeout(async () => {
+                        if (typeof window.saveToFirebase === 'function') {
+                            await window.saveToFirebase();
+                        } else {
+                            console.warn('⚠️ saveToFirebase não está disponível ainda');
+                        }
+                    }, 100);
+                }
+                console.log('✅ Dados carregados com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados do usuário:', error);
+                throw error;
+            }
         }
-        
-        // Esconde loading se a função já existir
-        if (window.hideLoading) window.hideLoading();
-        
-        // Define função de logout
-        window.logout = async () => {
-          try {
-            if (window.showLoading) window.showLoading();
-            await signOut(window.auth);
-            window.location.href = 'login.html';
-          } catch (error) {
-            if (window.showToast) window.showToast('Erro ao sair: ' + error.message, 'error');
-            if (window.hideLoading) window.hideLoading();
-          }
-        };
-      } catch (error) {
-        console.error('❌ Erro ao carregar:', error);
-        if (window.showToast) {
-          window.showToast('Erro ao carregar dados: ' + error.message, 'error');
-        } else {
-          alert('Erro ao carregar dados: ' + error.message);
-        }
-        if (window.hideLoading) window.hideLoading();
-      }
-    }
-  });
-
-  async function loadUserData(uid) {
-    try {
-      console.log('📊 Carregando dados do usuário:', uid);
-      const docRef = doc(window.db, "usuarios", uid);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        console.log('✅ Dados encontrados no Firebase');
-        const data = docSnap.data();
-        console.log('📦 Dados recebidos:', data);
-        
-        // Aguarda um pouco para garantir que o DOM está pronto
-        setTimeout(() => {
-          if (window.updateStateFromFirebase) {
-            window.updateStateFromFirebase(data);
-          } else {
-            console.warn('⚠️ updateStateFromFirebase não disponível, tentando novamente...');
-            setTimeout(() => window.updateStateFromFirebase(data), 500);
-          }
-        }, 100);
-      } else {
-        console.log('🆕 Novo usuário - inicializando dados padrão');
-        // Aguarda para garantir que saveToFirebase existe
-        setTimeout(async () => {
-          if (window.saveToFirebase) {
-            await window.saveToFirebase();
-          } else {
-            console.warn('⚠️ saveToFirebase não está disponível ainda');
-          }
-        }, 100);
-      }
-      console.log('✅ Dados carregados com sucesso!');
-    } catch (error) {
-      console.error('❌ Erro ao carregar dados do usuário:', error);
-      throw error;
-    }
-  }
-</script>
+    </script>
 
 </body>
 </html>
