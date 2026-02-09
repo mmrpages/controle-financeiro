@@ -96,6 +96,9 @@ window.showToast = (message, type = 'info') => {
 // ===== SINCRONIZAÇÃO COM FIREBASE =====
 
 window.updateStateFromFirebase = (newData) => {
+  console.log('🔄 updateStateFromFirebase chamado');
+  console.log('📦 Dados recebidos:', newData);
+  
   try {
     state = {
       ...state,
@@ -105,12 +108,19 @@ window.updateStateFromFirebase = (newData) => {
       data: newData.data || state.data,
       settings: newData.settings || { showTotals: {} }
     };
+    
+    console.log('✅ State atualizado:', state);
+    console.log('🏗️ Chamando build()...');
+    
     build();
+    
+    console.log('✅ build() concluído');
+    
     if (window.showToast) {
       window.showToast('Dados carregados com sucesso!', 'success');
     }
   } catch (error) {
-    console.error('Erro ao atualizar state:', error);
+    console.error('❌ Erro ao atualizar state:', error);
     if (window.showToast) {
       window.showToast('Erro ao carregar dados', 'error');
     }
@@ -227,16 +237,22 @@ function updateSummary(totalReceita, totalGasto) {
 // ===== CONSTRUÇÃO DA TABELA =====
 
 function build() {
+  console.log('🏗️ build() iniciado');
+  
   const head = document.getElementById('tableHead');
   const body = document.getElementById('tableBody');
   
+  console.log('📍 Elementos encontrados:', { head: !!head, body: !!body });
+  
   if (!head || !body) {
-    console.warn('Elementos da tabela não encontrados - aguardando DOM');
+    console.warn('⚠️ Elementos da tabela não encontrados - aguardando DOM');
     // Se os elementos não existem ainda, tenta novamente em 100ms
     setTimeout(build, 100);
     return;
   }
 
+  console.log('📊 Categorias:', state.categories.length);
+  
   // Ordena categorias por tipo
   state.categories.sort((a, b) => a.type.localeCompare(b.type));
   
@@ -246,6 +262,8 @@ function build() {
     groups[cat.type] = (groups[cat.type] || 0) + 1;
   });
 
+  console.log('📁 Grupos:', groups);
+
   // Constrói cabeçalho
   buildTableHeader(head, groups);
   
@@ -254,6 +272,8 @@ function build() {
   
   // Calcula valores
   calculate();
+  
+  console.log('✅ build() concluído com sucesso');
 }
 
 function buildTableHeader(head, groups) {
@@ -342,7 +362,10 @@ window.debouncedCalculate = debouncedCalculate;
 
 // ===== MODAIS =====
 
-window.addExpense = () => openDataModal();
+window.addExpense = () => {
+  console.log('🆕 Botão + Despesa clicado');
+  openDataModal();
+};
 
 window.editColumn = (id) => openDataModal(id);
 
@@ -378,8 +401,15 @@ window.closeDataModal = () => {
 };
 
 function openDataModal(id = null) {
+  console.log('📝 openDataModal chamado', { id });
+  
   currentEditId = id;
   const select = document.getElementById('inputExpenseCategory');
+  
+  if (!select) {
+    console.error('❌ Select de categoria não encontrado!');
+    return;
+  }
   
   select.innerHTML = state.presets.map(preset => 
     `<option value="${preset}">${preset}</option>`
@@ -391,64 +421,92 @@ function openDataModal(id = null) {
       document.getElementById('inputExpenseName').value = cat.name;
       select.value = cat.type;
       document.getElementById('dataModalTitle').textContent = 'Editar Despesa';
+      console.log('✏️ Modo edição:', cat);
     }
   } else {
     document.getElementById('inputExpenseName').value = '';
     document.getElementById('dataModalTitle').textContent = 'Nova Despesa';
+    console.log('➕ Modo nova despesa');
   }
   
-  document.getElementById('dataModal').style.display = 'flex';
+  const modal = document.getElementById('dataModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    console.log('✅ Modal aberto');
+  } else {
+    console.error('❌ Modal não encontrado!');
+  }
 }
 
-// Salvar despesa
-document.addEventListener('DOMContentLoaded', () => {
+// Salvar despesa - Função executada quando clicar no botão
+async function saveExpenseData() {
+  console.log('💾 saveExpenseData chamado');
+  
+  const name = document.getElementById('inputExpenseName').value.trim();
+  const type = document.getElementById('inputExpenseCategory').value;
+  
+  console.log('📝 Nome:', name, '| Tipo:', type);
+  
+  if (!name) {
+    window.showToast('Por favor, insira um nome para a despesa', 'warning');
+    return;
+  }
+  
+  if (name.length > 50) {
+    window.showToast('Nome muito longo (máx. 50 caracteres)', 'warning');
+    return;
+  }
+  
+  try {
+    if (window.showLoading) window.showLoading();
+    
+    if (currentEditId) {
+      const cat = state.categories.find(c => c.id === currentEditId);
+      if (cat) {
+        cat.name = name;
+        cat.type = type;
+      }
+      console.log('✏️ Despesa atualizada');
+      if (window.showToast) window.showToast('Despesa atualizada!', 'success');
+    } else {
+      const newCategory = { 
+        id: 'ex_' + Date.now(), 
+        name, 
+        type 
+      };
+      state.categories.push(newCategory);
+      console.log('➕ Nova despesa criada:', newCategory);
+      if (window.showToast) window.showToast('Despesa criada!', 'success');
+    }
+    
+    window.closeDataModal();
+    await window.saveToFirebase();
+    build();
+  } catch (error) {
+    console.error('❌ Erro ao salvar despesa:', error);
+    if (window.showToast) window.showToast('Erro ao salvar despesa', 'error');
+  } finally {
+    if (window.hideLoading) window.hideLoading();
+  }
+}
+
+// Associa a função ao botão
+function initSaveButton() {
   const btnSave = document.getElementById('btnSaveData');
   if (btnSave) {
-    btnSave.onclick = async () => {
-      const name = document.getElementById('inputExpenseName').value.trim();
-      const type = document.getElementById('inputExpenseCategory').value;
-      
-      if (!name) {
-        window.showToast('Por favor, insira um nome para a despesa', 'warning');
-        return;
-      }
-      
-      if (name.length > 50) {
-        window.showToast('Nome muito longo (máx. 50 caracteres)', 'warning');
-        return;
-      }
-      
-      try {
-        window.showLoading();
-        
-        if (currentEditId) {
-          const cat = state.categories.find(c => c.id === currentEditId);
-          if (cat) {
-            cat.name = name;
-            cat.type = type;
-          }
-          window.showToast('Despesa atualizada!', 'success');
-        } else {
-          state.categories.push({ 
-            id: 'ex_' + Date.now(), 
-            name, 
-            type 
-          });
-          window.showToast('Despesa criada!', 'success');
-        }
-        
-        window.closeDataModal();
-        await window.saveToFirebase();
-        build();
-      } catch (error) {
-        console.error('Erro ao salvar despesa:', error);
-        window.showToast('Erro ao salvar despesa', 'error');
-      } finally {
-        window.hideLoading();
-      }
-    };
+    console.log('✅ Botão de salvar encontrado, associando função');
+    btnSave.onclick = saveExpenseData;
+  } else {
+    console.warn('⚠️ Botão btnSaveData não encontrado');
   }
-});
+}
+
+// Tenta associar o botão imediatamente e quando o DOM carregar
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSaveButton);
+} else {
+  initSaveButton();
+}
 
 // ===== RESET =====
 
