@@ -594,135 +594,130 @@ window.resetAll = async () => {
 // ===== GRÁFICO POR MÊS =====
 
 window.showMonthChart = (monthIndex) => {
-  const monthData = state.data[monthIndex];
-  const monthName = months[monthIndex];
-  
-  // Agrupa despesas por categoria (tipo)
-  const categoryTotals = {};
-  
-  state.categories.forEach(cat => {
-    const value = monthData.expenses[cat.id] || 0;
-    if (value > 0) {
-      // Agrupa pelo tipo (categoria)
-      if (!categoryTotals[cat.type]) {
-        categoryTotals[cat.type] = 0;
-      }
-      categoryTotals[cat.type] += value;
-    }
-  });
-  
-  // Converte objeto em arrays para o gráfico
-  const labels = Object.keys(categoryTotals);
-  const data = Object.values(categoryTotals);
-  
-  if (data.length === 0) {
-    window.showToast('Nenhuma despesa registrada neste mês', 'info');
-    return;
-  }
-  
-  const total = data.reduce((sum, val) => sum + val, 0);
-  
-  // Cores fixas por categoria para consistência
-  const categoryColors = {
-    'Fixa': '#0ea5e9',
-    'Variável': '#8b5cf6',
-    'Lazer': '#ec4899',
-    'Saúde': '#10b981',
-    'Moradia': '#f59e0b',
-    'Transporte': '#3b82f6',
-    'Cartão de Crédito': '#ef4444',
-    'Outros': '#64748b'
-  };
-  
-  const colors = labels.map(label => categoryColors[label] || getRandomColor());
-  
-  document.getElementById('modalTitle').textContent = `Despesas por Categoria - ${monthName}`;
-  document.getElementById('modalTotal').textContent = `Total: ${formatCurrency(total)}`;
-  
-  const modal = document.getElementById('chartModal');
-  modal.style.display = 'flex';
-  
-  const ctx = document.getElementById('categoryChart').getContext('2d');
-  
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
-  
-  chartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: colors,
-        borderWidth: 3,
-        borderColor: '#fff'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            padding: 15,
-            font: {
-              size: 12,
-              weight: 'bold'
+    const monthData = state.data[monthIndex];
+    const monthName = months[monthIndex];
+
+    // Agrupa despesas por categoria (tipo)
+    const categoryTotals = {};
+
+    state.categories.forEach(cat => {
+        const value = monthData.expenses[cat.id] || 0;
+        if (value > 0) {
+            // Agrupa pelo tipo (categoria)
+            if (!categoryTotals[cat.type]) {
+                categoryTotals[cat.type] = 0;
             }
-          }
+            categoryTotals[cat.type] += value;
+        }
+    });
+
+    // Converte objeto em arrays para o gráfico
+    const labels = Object.keys(categoryTotals);
+    const data = Object.values(categoryTotals);
+
+    if (data.length === 0) {
+        window.showToast('Nenhuma despesa registrada neste mês', 'info');
+        return;
+    }
+
+    const total = data.reduce((sum, val) => sum + val, 0);
+
+    // Cores fixas por categoria para consistência
+    const categoryColors = {
+        'Fixa': '#0ea5e9',
+        'Variável': '#8b5cf6',
+        'Lazer': '#ec4899',
+        'Saúde': '#10b981',
+        'Moradia': '#f59e0b',
+        'Transporte': '#3b82f6',
+        'Cartão de Crédito': '#ef4444',
+        'Outros': '#64748b'
+    };
+
+    const colors = labels.map(label => categoryColors[label] || getRandomColor());
+
+    document.getElementById('modalTitle').textContent = `Despesas por Categoria - ${monthName}`;
+    document.getElementById('modalTotal').textContent = `Total: ${formatCurrency(total)}`;
+
+    const modal = document.getElementById('chartModal');
+    modal.style.display = 'flex';
+
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 3,
+                borderColor: '#fff'
+            }]
         },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const label = context.label || '';
-              const value = formatCurrency(context.parsed);
-              const percentage = ((context.parsed / total) * 100).toFixed(1);
-              return `${label}: ${value} (${percentage}%)`;
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const label = context.label || '';
+                            const value = formatCurrency(context.parsed);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    },
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    }
+                }
             }
-          },
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: 12,
-          titleFont: {
-            size: 14
-          },
-          bodyFont: {
-            size: 13
-          }
         }
-      }
-    }
-  });
-          }
+    });
+
+    window.closeChartModal = () => {
+        document.getElementById('chartModal').style.display = 'none';
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
         }
-      }
+    };
+
+    function getRandomColor() {
+        const colors = [
+            '#0ea5e9', '#8b5cf6', '#ec4899', '#f59e0b',
+            '#10b981', '#ef4444', '#3b82f6', '#6366f1',
+            '#14b8a6', '#f97316', '#84cc16', '#a855f7'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
     }
-  });
-};
 
-window.closeChartModal = () => {
-  document.getElementById('chartModal').style.display = 'none';
-  if (chartInstance) {
-    chartInstance.destroy();
-    chartInstance = null;
-  }
-};
+    // ===== INICIALIZAÇÃO =====
 
-function getRandomColor() {
-  const colors = [
-    '#0ea5e9', '#8b5cf6', '#ec4899', '#f59e0b', 
-    '#10b981', '#ef4444', '#3b82f6', '#6366f1',
-    '#14b8a6', '#f97316', '#84cc16', '#a855f7'
-  ];
-  return colors[Math.floor(Math.random() * colors.length)];
-}
-
-// ===== INICIALIZAÇÃO =====
-
-// Inicializa quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', build);
-} else {
-  build();
+    // Inicializa quando o DOM estiver pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', build);
+    } else {
+        build();
+    }
 }
