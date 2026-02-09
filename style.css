@@ -243,6 +243,22 @@ tr:hover {
   background: var(--danger); 
 }
 
+.usage-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #1e293b;
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* ===== SUMMARY CARDS ===== */
 .grid-info { 
   display: grid; 

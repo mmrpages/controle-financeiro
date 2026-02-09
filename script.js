@@ -188,6 +188,7 @@ function calculate() {
 
 function updateUsageBar(monthIndex, income, gasto) {
   const bar = document.getElementById(`bar-${monthIndex}`);
+  const text = document.getElementById(`text-${monthIndex}`);
   if (!bar) return;
   
   const percentage = income > 0 ? (gasto / income) * 100 : 0;
@@ -195,6 +196,13 @@ function updateUsageBar(monthIndex, income, gasto) {
   
   bar.style.width = cappedPercentage + '%';
   bar.className = percentage > 100 ? 'usage-bar warning' : 'usage-bar';
+  
+  // Atualiza o texto do percentual
+  if (text) {
+    text.textContent = percentage.toFixed(0) + '%';
+    // Muda cor do texto se estourar o orçamento
+    text.style.color = percentage > 100 ? '#991b1b' : '#1e293b';
+  }
 }
 
 function updateSummary(totalReceita, totalGasto) {
@@ -314,6 +322,7 @@ function buildTableBody(body) {
         <td>
           <div class="usage-wrapper">
             <div class="usage-bar" id="bar-${monthIndex}"></div>
+            <div class="usage-text" id="text-${monthIndex}">0%</div>
           </div>
         </td>
       </tr>
