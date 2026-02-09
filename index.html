@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <!-- Chart.js é usado para o gráfico de pizza por mês -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
 <body>
 
@@ -24,6 +25,9 @@
             <h1>Finanças 2026</h1>
             <div class="toolbar">
                 <button class="btn btn-accent" type="button" onclick="addExpense()">+ Despesa</button>
+                <button class="btn btn-warning" onclick="buyPremium()" id="premiumBtn">
+                    🚀 Premium R$ 9,90/mês
+                </button>
                 <button class="btn btn-secondary" type="button" onclick="logout()">Sair</button>
                 <button class="btn btn-danger" type="button" onclick="resetAll()">Limpar Tudo</button>
             </div>
