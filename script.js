@@ -716,63 +716,28 @@ if (document.readyState === 'loading') {
 }
 
 // ===== PAGAMENTO PREMIUM MERCADO PAGO =====
-const MP_PUBLIC_KEY = 'APP_USR-4ed31df5-50ce-4d59-b70b-01a3882649ab';
-const MP_ACCESS_TOKEN = 'APP_USR-8287383576240365-020919-ff2f173f0d9621e5e0ff2059b1c4bcb3-3193873266';
-
-const mp = new MercadoPago(MP_PUBLIC_KEY);
-state.isPremium = state.isPremium || false; // garante consistência
-
 window.buyPremium = async function () {
     showLoading();
-
-    const preference = {
-        items: [{
-            title: 'Acesso Premium Financas 2026',
-            unit_price: 9.90,
-            quantity: 1,
-            currency_id: 'BRL'
-        }],
-        payer: {
-            email: window.auth ? window.auth.currentUser.email : 'user@example.com'
-        },
-        back_urls: {
-            success: window.location.origin + '/controle-financeiro/index.html?status=approved',
-            failure: window.location.origin + '/controle-financeiro/index.html?status=rejected',
-            pending: window.location.origin + '/controle-financeiro/index.html?status=pending'
-        },
-        auto_return: 'approved'
-    };
-
     try {
-        const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + MP_ACCESS_TOKEN,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(preference)
-        });
-
+        const response = await fetch(`https://us-central1-mmrpages-controle-financeiro.cloudfunctions.net/createPreference?email=${window.auth.currentUser.email}&origin=${window.location.origin}`);
         const data = await response.json();
 
         if (data.init_point) {
-            // Abre checkout em nova aba
-            window.open(data.init_point, '_blank');
-
-            // Opcional: redireciona usuário para página de status
+            window.open(data.init_point, "_blank");
             setTimeout(() => {
                 window.location.href = window.location.origin + "/controle-financeiro/index.html?status=waiting";
             }, 1000);
         } else {
-            showToast('Erro ao criar pagamento', 'error');
+            showToast("Erro ao criar pagamento", "error");
         }
     } catch (error) {
-        console.error('Erro pagamento:', error);
-        showToast('Erro de conexão', 'error');
+        console.error("Erro pagamento:", error);
+        showToast("Erro de conexão", "error");
     } finally {
         hideLoading();
     }
 };
+
 
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
