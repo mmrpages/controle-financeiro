@@ -5,6 +5,129 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Informações - Finanças 2026</title>
   <link rel="stylesheet" href="style.css">
+<style>
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    /* Fundo com gradiente */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Cartões de conteúdo */
+    .auth-card {
+      background: #fff;
+      padding: 30px;
+      margin: 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .auth-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+    }
+    
+    .auth-card h2 {
+      color: #0ea5e9;
+      margin-bottom: 15px;
+      font-weight: 700;
+      font-size: 1.6rem;
+    }
+    
+    .auth-card p {
+      margin-bottom: 20px;
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.5;
+    }
+    
+    /* Inputs e textarea */
+    .auth-input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .auth-input:focus {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    }
+    
+    /* Botão */
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 15px;
+      background: #0ea5e9;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    
+    .auth-btn:hover {
+      background: #0284c7;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+    }
+    
+    .auth-btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Lista da LGPD */
+    .auth-card ul {
+      text-align: left;
+      margin-top: 10px;
+      padding-left: 20px;
+      color: #444;
+    }
+    
+    /* Rodapé */
+    .footer {
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #555;
+      border-top: 2px solid #ddd;
+      margin-top: auto;
+      width: 100%;
+    }
+    
+    .footer a {
+      color: #0ea5e9;
+      text-decoration: none;
+      margin: 0 8px;
+      font-weight: 600;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+</style>
 </head>
 <body>
 
