@@ -776,37 +776,39 @@ window.buyPremium = async function () {
 
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
-    const paymentId = urlParams.get('payment_id');
-    const status = urlParams.get('status');
+    const paymentId = urlParams.get('payment_id') || urlParams.get('collection_id');
 
-    if (!paymentId) return; // nada a verificar
+    if (!paymentId) {
+        console.warn("Nenhum paymentId encontrado");
+        return;
+    }
 
     try {
-        const response = await fetch(`https://api.mercadopago.com/v1/sandbox/payments/${paymentId}`, {
-            headers: { 'Authorization': 'Bearer ' + MP_ACCESS_TOKEN }
-        });
-        const data = await response.json();
+        // Chama sua função backend (Firebase Functions)
+        const response = await fetch(`http://127.0.0.1:5001/mmrpages-controle-financeiro/us-central1/checkPayment?paymentId=${paymentId}`);
+        const result = await response.json();
 
-        if (data.status === 'approved') {
-            // Pagamento aprovado → habilita premium
+        console.log("🔎 Resultado do backend:", result);
+
+        if (result.status === "approved") {
             state.isPremium = true;
             state.paymentId = paymentId;
             await window.saveToFirebase();
-            updatePremiumUI(); // <- função que mostra recursos premium
-            showToast('✅ Premium ativado permanentemente!', 'success');
+            updatePremiumUI();
+            showToast("✅ Premium ativado permanentemente!", "success");
         } else {
-            // Pagamento não concluído → mantém sem premium
             state.isPremium = false;
-            updatePremiumUI(); // <- garante que premium fique desativado
-            showToast(`❌ Pagamento não concluído (${data.status}). Verifique seu pagamento.`, 'error');
+            updatePremiumUI();
+            showToast(`❌ Pagamento não concluído (${result.status})`, "error");
         }
     } catch (error) {
-        console.error('❌ Erro ao verificar pagamento:', error);
+        console.error("❌ Erro ao verificar pagamento:", error);
         state.isPremium = false;
         updatePremiumUI();
-        showToast('Erro de verificação de pagamento', 'error');
+        showToast("Erro de verificação de pagamento", "error");
     }
 }
+
 
 function updatePremiumUI() {
     console.log("🔎 Status Premium:", state.isPremium);
