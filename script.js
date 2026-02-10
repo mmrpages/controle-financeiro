@@ -366,8 +366,8 @@ window.debouncedCalculate = debouncedCalculate;
 // ===== MODAIS =====
 
 window.addExpense = () => {
-    if (!state.isPremium) {
-        showToast('🔒 Premium necessário!', 'warning');
+    if (!state.isPremium && state.categories.length >= 3) {
+        showToast('🚫 Versão gratuita permite até 3 despesas. Faça upgrade para Premium!', 'warning');
         return;
     }
     openDataModal();
@@ -447,28 +447,21 @@ function openDataModal(id = null) {
 }
 
 async function saveExpenseData() {
-    console.log('💾 saveExpenseData chamado');
-
     const nameInput = document.getElementById('inputExpenseName');
     const typeSelect = document.getElementById('inputExpenseCategory');
 
-    if (!nameInput || !typeSelect) {
-        console.error('❌ Campos do modal não encontrados');
-        return;
-    }
+    if (!nameInput || !typeSelect) return;
 
     const name = nameInput.value.trim();
     const type = typeSelect.value;
-
-    console.log('📝 Nome:', name, '| Tipo:', type);
 
     if (!name) {
         window.showToast?.('Por favor, insira um nome para a despesa', 'warning');
         return;
     }
 
-    if (name.length > 50) {
-        window.showToast?.('Nome muito longo (máx. 50 caracteres)', 'warning');
+    if (!state.isPremium && !currentEditId && state.categories.length >= 3) {
+        window.showToast?.('🚫 Limite de 3 despesas na versão gratuita. Faça upgrade para Premium!', 'warning');
         return;
     }
 
@@ -481,7 +474,6 @@ async function saveExpenseData() {
                 cat.name = name;
                 cat.type = type;
             }
-            console.log('✏️ Despesa atualizada');
             window.showToast?.('Despesa atualizada!', 'success');
         } else {
             const newCategory = {
@@ -490,10 +482,8 @@ async function saveExpenseData() {
                 type
             };
             state.categories.push(newCategory);
-            console.log('➕ Nova despesa criada:', newCategory);
             window.showToast?.('Despesa criada!', 'success');
         }
-
         window.closeDataModal();
         await window.saveToFirebase();
         build();
@@ -805,6 +795,7 @@ function updatePremiumUI() {
 
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
