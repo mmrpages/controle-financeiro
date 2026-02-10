@@ -774,7 +774,6 @@ window.buyPremium = async function () {
     }
 };
 
-
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentId = urlParams.get('payment_id');
