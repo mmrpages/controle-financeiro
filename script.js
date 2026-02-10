@@ -780,7 +780,7 @@ async function checkPaymentStatus() {
     }
 
     try {
-        const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+        const response = await fetch(`https://api.mercadopago.com/v1/sandbox/payments/${paymentId}`, {
             headers: {
                 'Authorization': 'Bearer ' + MP_ACCESS_TOKEN
             }
