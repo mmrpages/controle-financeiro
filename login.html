@@ -270,25 +270,24 @@
             if (e.key === 'Enter') {
                 handleAuth();
             }
-        });
-   
-    window.forgotPasswordPrompt = async () => {
-    const email = document.getElementById('email').value.trim();
-    if (!email) {
-        showError("Digite seu e-mail para recuperar a senha");
-        return;
-    }
-    try {
-        await sendPasswordResetEmail(auth, email);
-        alert("📧 Email de redefinição enviado! Verifique sua caixa de entrada.");
-    } catch (error) {
-        console.error("Erro ao enviar email de redefinição:", error);
-        showError("Erro ao enviar email. Verifique se o e-mail está correto.");
-    }
-};       
+            
+        window.forgotPasswordPrompt = async () => {
+        const email = document.getElementById('email').value.trim();
+        if (!email) {
+            showError("Digite seu e-mail para recuperar a senha");
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("📧 Email de redefinição enviado! Verifique sua caixa de entrada.");
+        } catch (error) {
+            console.error("Erro ao enviar email de redefinição:", error);
+            showError("Erro ao enviar email. Verifique se o e-mail está correto.");
+        }
+    };       
     </script>
-
 </body>
 </html>
+
 
 
