@@ -736,9 +736,9 @@ window.buyPremium = async function () {
             email: window.auth ? window.auth.currentUser.email : 'user@example.com'
         },
         back_urls: {
-            success: window.location.origin + '/index.html?status=approved',
-            failure: window.location.origin + '/index.html?status=rejected',
-            pending: window.location.origin + '/index.html?status=pending'
+            success: window.location.origin + '/controle-financeiro/index.html?status=approved',
+            failure: window.location.origin + '/controle-financeiro/index.html?status=rejected',
+            pending: window.location.origin + '/controle-financeiro/index.html?status=pending'
         },
         auto_return: 'approved'
     };
@@ -761,7 +761,7 @@ window.buyPremium = async function () {
 
             // Opcional: redireciona usuário para página de status
             setTimeout(() => {
-                window.location.href = "index.html?status=waiting";
+                window.location.href = window.location.origin + "/controle-financeiro/index.html?status=waiting";
             }, 1000);
         } else {
             showToast('Erro ao criar pagamento', 'error');
