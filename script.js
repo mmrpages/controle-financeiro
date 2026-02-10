@@ -366,7 +366,10 @@ window.debouncedCalculate = debouncedCalculate;
 // ===== MODAIS =====
 
 window.addExpense = () => {
-    console.log('🆕 Botão + Despesa clicado');
+    if (!isPremium) {
+        showToast('🔒 Premium necessário!', 'warning');
+        return;
+    }
     openDataModal();
 };
 
@@ -539,6 +542,13 @@ window.resetAll = async () => {
 };
 
 window.clearMonth = async (monthIndex) => {
+
+    window.clearMonth = async (monthIndex) => {
+        if (!isPremium) {
+            showToast('🔒 Premium necessário!', 'warning');
+            return;
+        }
+
     if (!months[monthIndex]) return;
 
     const confirmMsg =
@@ -767,8 +777,8 @@ function checkPaymentStatus() {
     const status = urlParams.get('status');
 
     if (status === 'approved') {
-        isPremium = true;
-        const btn = document.getElementById('premiumBtn');
+        state.isPremium = true;
+        await saveToFirebase();
         if (btn) {
             btn.textContent = '✅ Premium Ativo';
             btn.disabled = true;
