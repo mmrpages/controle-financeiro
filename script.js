@@ -710,125 +710,73 @@ if (document.readyState === 'loading') {
     build();
 }
 
-// Suas chaves do Mercado Pago (sandbox para teste)
-const MP_PUBLIC_KEY = 'APP_USR-4ed31df5-50ce-4d59-b70b-01a3882649ab'; // Teste: APP_USR-...
-const MP_ACCESS_TOKEN = 'APP_USR-8287383576240365-020919-ff2f173f0d9621e5e0ff2059b1c4bcb3-3193873266'; // Teste: APP_USR-...
+// ===== PAGAMENTO PREMIUM MERCADO PAGO =====
+const MP_PUBLIC_KEY = 'APP_USR-8e8386f1-3c48-4d9d-8b47-5e1234567890';
+const MP_ACCESS_TOKEN = 'TEST-8e8386f14a3c484d8b475e1234567890123456';
 
-// Inicializa Mercado Pago
 const mp = new MercadoPago(MP_PUBLIC_KEY);
-
-// Estado premium do usuário
 let isPremium = false;
 
-// Verifica se usuário é premium (pode salvar no Firebase)
-async function checkPremiumStatus() {
-    // Lógica para verificar no Firebase se já pagou
-    // Por enquanto, simula não premium
-    isPremium = false;
-    updatePremiumUI();
-}
+window.buyPremium = async function () {
+    showLoading();
 
-// Bloqueia funções premium se não pagar
-function requirePremium() {
-    if (!isPremium) {
-        showToast('🔒 Premium necessário. Faça upgrade!', 'warning');
-        return false;
-    }
-    return true;
-}
+    const preference = {
+        items: [{
+            title: 'Acesso Premium Financas 2026',
+            unit_price: 990,
+            quantity: 1,
+            currency_id: 'BRL'
+        }],
+        payer: {
+            email: window.auth ? window.auth.currentUser.email : 'user@example.com'
+        },
+        back_urls: {
+            success: window.location.origin + '/index.html?status=approved',
+            failure: window.location.origin + '/index.html?status=rejected'
+        },
+        auto_return: 'approved'
+    };
 
-// Compra Premium
-window.buyPremium = async () => {
     try {
-        showLoading();
-
-        const preference = {
-            items: [{
-                title: 'Acesso Premium Finanças 2026',
-                unit_price: 990, // R$ 9,90
-                quantity: 1,
-                currency_id: 'BRL'
-            }],
-            payer: {
-                email: window.auth?.currentUser?.email || 'user@example.com'
-            },
-            back_urls: {
-                success: `${window.location.origin}/index.html?status=approved`,
-                failure: `${window.location.origin}/index.html?status=rejected`,
-                pending: `${window.location.origin}/index.html?status=pending`
-            },
-            auto_return: 'approved',
-            notification_url: `${window.location.origin}/webhook.php` // Para confirmação
-        };
-
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                'Authorization': 'Bearer ' + MP_ACCESS_TOKEN,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(preference)
         });
 
         const data = await response.json();
+
         if (data.init_point) {
             window.open(data.init_point, '_blank');
+        } else {
+            showToast('Erro ao criar pagamento', 'error');
         }
     } catch (error) {
         console.error('Erro pagamento:', error);
-        showToast('Erro ao iniciar pagamento', 'error');
+        showToast('Erro de conexão', 'error');
     } finally {
         hideLoading();
     }
 };
 
-// Verifica URL após pagamento
 function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get('status');
 
     if (status === 'approved') {
         isPremium = true;
-        updatePremiumUI();
-        showToast('✅ Premium ativado!', 'success');
-        // Salva no Firebase
-        saveToFirebase();
-    } else if (status === 'rejected') {
-        showToast('❌ Pagamento cancelado', 'warning');
-    }
-}
-
-// Atualiza UI baseado no status premium
-function updatePremiumUI() {
-    const premiumBtn = document.getElementById('premiumBtn');
-    if (premiumBtn) {
-        if (isPremium) {
-            premiumBtn.textContent = '✅ Premium Ativo';
-            premiumBtn.disabled = true;
-            premiumBtn.className = 'btn btn-success';
-        } else {
-            premiumBtn.textContent = '🚀 Premium R$ 9,90/mês';
-            premiumBtn.disabled = false;
-            premiumBtn.className = 'btn btn-warning';
+        const btn = document.getElementById('premiumBtn');
+        if (btn) {
+            btn.textContent = '✅ Premium Ativo';
+            btn.disabled = true;
+            btn.className = 'btn btn-success';
         }
-    }
-
-    // Bloqueia funções premium se necessário
-    const addBtn = document.querySelector('[onclick="addExpense()"]');
-    const clearBtns = document.querySelectorAll('[onclick*="clearMonth"]');
-
-    if (!isPremium) {
-        addBtn.style.opacity = '0.5';
-        addBtn.onclick = () => showToast('🔒 Premium necessário!', 'warning');
-        clearBtns.forEach(btn => {
-            btn.style.opacity = '0.5';
-            btn.onclick = () => showToast('🔒 Premium necessário!', 'warning');
-        });
+        showToast('✅ Premium ativado!', 'success');
     }
 }
 
-// Inicializa no load
-window.addEventListener('load', () => {
-    checkPremiumStatus();
-    checkPaymentStatus();
-});
+window.addEventListener('load', checkPaymentStatus);
+
