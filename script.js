@@ -771,8 +771,6 @@ window.buyPremium = async function () {
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentId = urlParams.get('payment_id');
-    const status = urlParams.get('status');
-    const btn = document.getElementById('premiumBtn');
 
     if (!paymentId) {
         console.warn('Nenhum payment_id encontrado na URL');
@@ -780,6 +778,7 @@ async function checkPaymentStatus() {
     }
 
     try {
+        // Para testes use sandbox, em produção troque para /v1/payments
         const response = await fetch(`https://api.mercadopago.com/v1/sandbox/payments/${paymentId}`, {
             headers: {
                 'Authorization': 'Bearer ' + MP_ACCESS_TOKEN
@@ -788,12 +787,22 @@ async function checkPaymentStatus() {
         const data = await response.json();
 
         if (data.status === 'approved') {
+            // 🔒 Marca Premium e guarda dados
             state.isPremium = true;
-            state.paymentId = paymentId; // 🔒 guarda o ID da compra
-            await window.saveToFirebase(); // salva no Firestore
+            state.paymentId = paymentId;
+            state.merchantOrderId = urlParams.get('merchant_order_id');
+            state.paymentType = urlParams.get('payment_type');
 
+            await window.saveToFirebase();
             updatePremiumUI();
+
             showToast('✅ Premium ativado permanentemente!', 'success');
+
+            // 🔀 Redireciona para página Premium
+            setTimeout(() => {
+                window.location.href = "premium.html";
+                // ou index.html com funções liberadas
+            }, 1500);
         } else {
             showToast(`❌ Pagamento não aprovado: ${data.status}`, 'error');
         }
@@ -804,4 +813,3 @@ async function checkPaymentStatus() {
 }
 
 window.addEventListener('load', checkPaymentStatus);
-
