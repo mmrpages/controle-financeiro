@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Informações - Finanças 2026</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css"> <!-- mantém seu CSS -->
 <style>
     /* Reset básico */
     * {
@@ -131,17 +131,19 @@
 </head>
 <body>
 
+  <!-- Bloco Fale Conosco -->
   <div class="auth-card">
     <h2>Fale Conosco</h2>
     <p>Tem dúvidas ou sugestões? Envie sua mensagem abaixo:</p>
-    <form>
-      <input type="text" class="auth-input" placeholder="Seu nome" required>
-      <input type="email" class="auth-input" placeholder="Seu e-mail" required>
-      <textarea class="auth-input" placeholder="Sua mensagem" rows="4" required></textarea>
+    <form id="contatoForm" onsubmit="enviarContato(); return false;">
+      <input type="text" id="contatoNome" class="auth-input" placeholder="Seu nome" required>
+      <input type="email" id="contatoEmail" class="auth-input" placeholder="Seu e-mail" required>
+      <textarea id="contatoMensagem" class="auth-input" placeholder="Sua mensagem" rows="4" required></textarea>
       <button class="auth-btn" type="submit">Enviar</button>
     </form>
   </div>
 
+  <!-- Bloco Termos de Uso -->
   <div class="auth-card">
     <h2>Termos de Uso</h2>
     <p>
@@ -151,6 +153,7 @@
     </p>
   </div>
 
+  <!-- Bloco Política de Privacidade -->
   <div class="auth-card">
     <h2>Política de Privacidade</h2>
     <p>
@@ -164,12 +167,50 @@
     </ul>
   </div>
 
+  <!-- Rodapé -->
   <footer class="footer">
     <p>© 2026 Finanças 2026 - Todos os direitos reservados</p>
     <nav>
       <a href="index.html">Voltar ao sistema</a>
     </nav>
   </footer>
+
+  <!-- Script Firestore -->
+  <script type="module">
+    import firebaseConfig from './config.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } 
+      from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Função para salvar mensagem no Firestore
+    window.enviarContato = async () => {
+      const nome = document.querySelector("#contatoNome").value.trim();
+      const email = document.querySelector("#contatoEmail").value.trim();
+      const mensagem = document.querySelector("#contatoMensagem").value.trim();
+
+      if (!nome || !email || !mensagem) {
+        alert("Por favor, preencha todos os campos.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "contatos"), {
+          nome: nome,
+          email: email,
+          mensagem: mensagem,
+          dataEnvio: serverTimestamp()
+        });
+        alert("✅ Sua mensagem foi enviada com sucesso!");
+        document.querySelector("#contatoForm").reset();
+      } catch (error) {
+        console.error("Erro ao salvar no Firestore:", error);
+        alert("❌ Ocorreu um erro ao enviar sua mensagem. Tente novamente.");
+      }
+    };
+  </script>
 
 </body>
 </html>
