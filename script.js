@@ -804,7 +804,8 @@ async function checkPaymentStatus() {
 
             // Redireciona para página Premium
             setTimeout(() => {
-                window.location.href = "premium.html";
+
+                window.location.href = window.location.origin + "/controle-financeiro/index.html";
             }, 1500);
         } else {
             // Pagamento não concluído → informa e volta para home
@@ -812,7 +813,8 @@ async function checkPaymentStatus() {
             showToast(`❌ Pagamento não concluído (${data.status}). Verifique seu pagamento.`, 'error');
 
             setTimeout(() => {
-                window.location.href = "index.html";
+                state.isPremium = false;
+                window.location.href = window.location.origin + "/controle-financeiro/index.html";
             }, 2500);
         }
     } catch (error) {
@@ -822,7 +824,7 @@ async function checkPaymentStatus() {
         // Em caso de erro, volta para home sem premium
         state.isPremium = false;
         setTimeout(() => {
-            window.location.href = "index.html";
+            window.location.href = window.location.origin + "/controle-financeiro/index.html";
         }, 2500);
     }
 }
