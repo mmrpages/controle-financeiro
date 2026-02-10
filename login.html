@@ -150,7 +150,7 @@
 
     <script type="module">
         import firebaseConfig from './config.js';
-
+        import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
         import {
             getAuth,
@@ -271,8 +271,24 @@
                 handleAuth();
             }
         });
+   
+    window.forgotPasswordPrompt = async () => {
+    const email = document.getElementById('email').value.trim();
+    if (!email) {
+        showError("Digite seu e-mail para recuperar a senha");
+        return;
+    }
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert("📧 Email de redefinição enviado! Verifique sua caixa de entrada.");
+    } catch (error) {
+        console.error("Erro ao enviar email de redefinição:", error);
+        showError("Erro ao enviar email. Verifique se o e-mail está correto.");
+    }
+};       
     </script>
 
 </body>
 </html>
+
 
