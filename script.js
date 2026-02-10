@@ -366,7 +366,7 @@ window.debouncedCalculate = debouncedCalculate;
 // ===== MODAIS =====
 
 window.addExpense = () => {
-    if (!isPremium) {
+    if (!state.isPremium) {
         showToast('🔒 Premium necessário!', 'warning');
         return;
     }
@@ -542,12 +542,10 @@ window.resetAll = async () => {
 };
 
 window.clearMonth = async (monthIndex) => {
-
-    window.clearMonth = async (monthIndex) => {
-        if (!isPremium) {
-            showToast('🔒 Premium necessário!', 'warning');
-            return;
-        }
+    if (!state.isPremium) {
+        showToast('🔒 Premium necessário!', 'warning');
+        return;
+    }
 
     if (!months[monthIndex]) return;
 
@@ -560,11 +558,9 @@ window.clearMonth = async (monthIndex) => {
     try {
         window.showLoading?.();
 
-        // Zera RINDA e DESPESAS do mês
         state.data[monthIndex].income = 0;
         state.data[monthIndex].expenses = {};
 
-        // Atualiza inputs daquele mês
         const incomeEl = document.getElementById(`inc-${monthIndex}`);
         if (incomeEl) incomeEl.value = '';
 
@@ -573,7 +569,6 @@ window.clearMonth = async (monthIndex) => {
             if (el) el.value = '';
         });
 
-        // Recalcula totais e salva
         calculate();
         await window.saveToFirebase();
         window.showToast?.(`Mês ${months[monthIndex]} zerado completamente`, 'info');
@@ -725,7 +720,7 @@ const MP_PUBLIC_KEY = 'APP_USR-4ed31df5-50ce-4d59-b70b-01a3882649ab';
 const MP_ACCESS_TOKEN = 'APP_USR-8287383576240365-020919-ff2f173f0d9621e5e0ff2059b1c4bcb3-3193873266';
 
 const mp = new MercadoPago(MP_PUBLIC_KEY);
-let isPremium = false;
+state.isPremium = state.isPremium || false; // garante consistência
 
 window.buyPremium = async function () {
     showLoading();
@@ -772,19 +767,23 @@ window.buyPremium = async function () {
     }
 };
 
-function checkPaymentStatus() {
+
+async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get('status');
+    const btn = document.getElementById('btnPremium'); // botão premium na UI
 
     if (status === 'approved') {
         state.isPremium = true;
-        await saveToFirebase();
+        await window.saveToFirebase();
         if (btn) {
             btn.textContent = '✅ Premium Ativo';
             btn.disabled = true;
             btn.className = 'btn btn-success';
         }
         showToast('✅ Premium ativado!', 'success');
+    } else if (status === 'rejected') {
+        showToast('❌ Pagamento não aprovado', 'error');
     }
 }
 

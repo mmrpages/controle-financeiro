@@ -167,41 +167,38 @@
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    console.log('✅ Dados encontrados no Firebase');
                     const data = docSnap.data();
-                    console.log('📦 Dados recebidos:', data);
+                    window.updateStateFromFirebase(data);
 
-                    // Aguarda um pouco para garantir que o DOM e script.js estão prontos
-                    setTimeout(() => {
-                        if (typeof window.updateStateFromFirebase === 'function') {
-                            window.updateStateFromFirebase(data);
-                        } else {
-                            console.warn('⚠️ updateStateFromFirebase não disponível, tentando novamente...');
-                            setTimeout(() => {
-                                if (typeof window.updateStateFromFirebase === 'function') {
-                                    window.updateStateFromFirebase(data);
-                                }
-                            }, 500);
-                        }
-                    }, 100);
+                    // ✅ VERIFICA PREMIUM AQUI
+                    state.isPremium = data.isPremium || false;
+                    updatePremiumUI();
+
                 } else {
-                    console.log('🆕 Novo usuário - inicializando dados padrão');
-                    // Salva estado inicial padrão
+                    // Novo usuário
                     setTimeout(async () => {
-                        if (typeof window.saveToFirebase === 'function') {
-                            await window.saveToFirebase();
-                        } else {
-                            console.warn('⚠️ saveToFirebase não está disponível ainda');
-                        }
+                        await window.saveToFirebase();
                     }, 100);
                 }
-                console.log('✅ Dados carregados com sucesso!');
             } catch (error) {
-                console.error('❌ Erro ao carregar dados do usuário:', error);
-                throw error;
+                console.error('❌ Erro ao carregar:', error);
             }
         }
-    </script>
 
-</body>
+        function updatePremiumUI() {
+            const btn = document.getElementById('premiumBtn');
+            if (!btn) return;
+
+            if (state.isPremium) {
+                btn.textContent = '✅ Premium Ativo';
+                btn.disabled = true;
+                btn.className = 'btn btn-success';
+            } else {
+                btn.textContent = '🚀 Premium R$ 9,90/mês';
+                btn.disabled = false;
+                btn.className = 'btn btn-warning';
+            }
+        }
+            </script>
+    </body>
 </html>
