@@ -1,293 +1,163 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Finanças 2026</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-        }
-
-        .auth-card {
-            background: white;
-            padding: 40px;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-            .auth-card h2 {
-                color: var(--accent-blue);
-                margin-bottom: 10px;
-                font-weight: 800;
-                font-size: 1.8rem;
-            }
-
-            .auth-card p {
-                color: var(--text-muted);
-                margin-bottom: 30px;
-                font-size: 0.9rem;
-            }
-
-        .auth-input {
-            width: 100%;
-            padding: 14px;
-            margin: 10px 0;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            outline: none;
-            transition: 0.2s;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-
-            .auth-input:focus {
-                border-color: var(--accent-blue);
-                box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-            }
-
-        .auth-btn {
-            width: 100%;
-            padding: 14px;
-            margin-top: 20px;
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
-        }
-
-            .auth-btn:hover {
-                background: #0284c7;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-            }
-
-            .auth-btn:active {
-                transform: translateY(0);
-            }
-
-            .auth-btn:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none;
-                box-shadow: none;
-            }
-
-        .auth-toggle {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-            .auth-toggle b {
-                color: var(--accent-blue);
-            }
-
-            .auth-toggle:hover b {
-                text-decoration: underline;
-            }
-
-        .error-message {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-size: 0.85rem;
-            display: none;
-            text-align: left;
-        }
-
-            .error-message.show {
-                display: block;
-            }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Finanças 2026</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="auth-card" role="form" aria-labelledby="authTitle">
-        <h2 id="authTitle">Acessar Sistema</h2>
-        <p id="authSubtitle">Entre com seu e-mail e senha</p>
+  <div class="auth-card" role="form" aria-labelledby="authTitle">
+    <h2 id="authTitle">Acessar Sistema</h2>
+    <p id="authSubtitle">Entre com seu e-mail e senha</p>
 
-        <div id="errorMessage" class="error-message" aria-live="polite"></div>
+    <div id="errorMessage" class="error-message" aria-live="polite"></div>
 
-        <input type="email"
-               id="email"
-               class="auth-input"
-               placeholder="Seu e-mail"
-               autocomplete="email"
-               required>
-        <input type="password"
-               id="password"
-               class="auth-input"
-               placeholder="Sua senha (mín. 6 caracteres)"
-               autocomplete="current-password"
-               required
-               minlength="6">
-        <button id="mainBtn" class="auth-btn" type="button" onclick="handleAuth()">Entrar</button>
+    <!-- Form corrige warning do input fora de form -->
+    <form onsubmit="handleAuth(); return false;">
+      <input type="email" id="email" class="auth-input" placeholder="Seu e-mail" autocomplete="email" required>
+      <input type="password" id="password" class="auth-input" placeholder="Sua senha (mín. 8 caracteres)" autocomplete="current-password" required minlength="8">
+      <button id="mainBtn" class="auth-btn" type="submit">Entrar</button>
+    </form>
 
-        <div class="auth-toggle" onclick="forgotPasswordPrompt()">Esqueceu a senha? <b>Recuperar</b></div>
-        
-        <div class="auth-toggle" onclick="toggleMode()" id="toggleText">
-            Não tem conta? <b>Criar agora</b>
-        </div>
+    <!-- Esqueci minha senha -->
+    <div class="auth-toggle" onclick="forgotPasswordPrompt()">Esqueceu a senha? <b>Recuperar</b></div>
+
+    <!-- Alternar login/cadastro -->
+    <div class="auth-toggle" onclick="toggleMode()" id="toggleText">
+      Não tem conta? <b>Criar agora</b>
     </div>
+  </div>
 
-    <script type="module">
-        import firebaseConfig from './config.js';
-        import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import {
-            getAuth,
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword
-        } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+  <script type="module">
+    import firebaseConfig from './config.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      sendPasswordResetEmail,
+      updatePassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-        let isLogin = true;
+    let isLogin = true;
 
-        window.toggleMode = () => {
-            isLogin = !isLogin;
-            document.getElementById('authTitle').innerText = isLogin ? "Acessar Sistema" : "Criar Conta";
-            document.getElementById('authSubtitle').innerText = isLogin ? "Entre com seu e-mail e senha" : "Crie sua conta gratuitamente";
-            document.getElementById('mainBtn').innerText = isLogin ? "Entrar" : "Cadastrar";
-            document.getElementById('toggleText').innerHTML = isLogin
-                ? "Não tem conta? <b>Criar agora</b>"
-                : "Já tem conta? <b>Fazer Login</b>";
-            document.getElementById('password').placeholder = isLogin
-                ? "Sua senha (mín. 6 caracteres)"
-                : "Sua senha (mín. 6 caracteres)";
-            hideError();
-        };
+    // Alternar login/cadastro
+    window.toggleMode = () => {
+      isLogin = !isLogin;
+      document.getElementById('authTitle').innerText = isLogin ? "Acessar Sistema" : "Criar Conta";
+      document.getElementById('authSubtitle').innerText = isLogin ? "Entre com seu e-mail e senha" : "Crie sua conta gratuitamente";
+      document.getElementById('mainBtn').innerText = isLogin ? "Entrar" : "Cadastrar";
+      document.getElementById('toggleText').innerHTML = isLogin
+        ? "Não tem conta? <b>Criar agora</b>"
+        : "Já tem conta? <b>Fazer Login</b>";
+      hideError();
+    };
 
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
+    // Exibir erros
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = message;
+      errorDiv.classList.add('show');
+    }
+    function hideError() {
+      document.getElementById('errorMessage').classList.remove('show');
+    }
+
+    // Validação de senha forte
+    function isStrongPassword(password) {
+      const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+      return strongRegex.test(password);
+    }
+
+    // Login/Cadastro
+    window.handleAuth = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showError('Por favor, preencha todos os campos');
+        return;
+      }
+      if (!email.includes('@')) {
+        showError('Por favor, insira um e-mail válido');
+        return;
+      }
+      if (!isStrongPassword(password)) {
+        showError('A senha deve ter no mínimo 8 caracteres, incluindo maiúsculas, minúsculas, números e símbolos.');
+        return;
+      }
+
+      hideError();
+      try {
+        if (isLogin) {
+          await signInWithEmailAndPassword(auth, email, password);
+        } else {
+          await createUserWithEmailAndPassword(auth, email, password);
         }
+        window.location.href = 'index.html';
+      } catch (error) {
+        console.error('Erro de autenticação:', error);
+        showError("E-mail ou senha inválidos"); // mensagem genérica
+      }
+    };
 
-        function hideError() {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.classList.remove('show');
+    // Esqueci minha senha
+    window.forgotPasswordPrompt = async () => {
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        showError("Digite seu e-mail para recuperar a senha");
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert("📧 Email de redefinição enviado! Verifique sua caixa de entrada.");
+      } catch (error) {
+        console.error("Erro ao enviar email de redefinição:", error);
+        showError("Erro ao enviar email. Verifique se o e-mail está correto.");
+      }
+    };
+
+    // Trocar senha (usuário logado)
+    window.changePassword = async () => {
+      const newPassword = document.getElementById('newPassword').value;
+      if (!isStrongPassword(newPassword)) {
+        showError("A nova senha deve ser forte (mín. 8 caracteres, maiúsculas, minúsculas, números e símbolos).");
+        return;
+      }
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          showError("Usuário não autenticado");
+          return;
         }
+        await updatePassword(user, newPassword);
+        alert("✅ Senha atualizada com sucesso!");
+      } catch (error) {
+        console.error("Erro ao atualizar senha:", error);
+        showError("Erro ao atualizar senha. Talvez seja necessário fazer login novamente.");
+      }
+    };
 
-        function setLoading(loading) {
-            const btn = document.getElementById('mainBtn');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
+    // Logout seguro
+    window.logout = async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
 
-            btn.disabled = loading;
-            emailInput.disabled = loading;
-            passwordInput.disabled = loading;
-            btn.textContent = loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Cadastrar');
-        }
+    // Proteção de sessão
+    onAuthStateChanged(auth, (user) => {
+      if (!user && window.location.pathname.includes("index.html")) {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
 
-        window.handleAuth = async () => {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                showError('Por favor, preencha todos os campos');
-                return;
-            }
-
-            if (!email.includes('@')) {
-                showError('Por favor, insira um e-mail válido');
-                return;
-            }
-
-            if (password.length < 6) {
-                showError('A senha deve ter no mínimo 6 caracteres');
-                return;
-            }
-
-            hideError();
-            setLoading(true);
-
-            try {
-                if (isLogin) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error('Erro de autenticação:', error);
-
-                let errorMessage = 'Erro na autenticação. Tente novamente.';
-
-                switch (error.code) {
-                    case 'auth/invalid-email':
-                        errorMessage = 'E-mail inválido';
-                        break;
-                    case 'auth/user-disabled':
-                        errorMessage = 'Esta conta foi desativada';
-                        break;
-                    case 'auth/user-not-found':
-                        errorMessage = 'Usuário não encontrado. Verifique o e-mail ou crie uma conta';
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = 'Senha incorreta';
-                        break;
-                    case 'auth/email-already-in-use':
-                        errorMessage = 'Este e-mail já está cadastrado';
-                        break;
-                    case 'auth/weak-password':
-                        errorMessage = 'Senha muito fraca. Use no mínimo 6 caracteres';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessage = 'Erro de conexão. Verifique sua internet';
-                        break;
-                    default:
-                        errorMessage = error.message || 'Erro na autenticação. Tente novamente.';
-                }
-
-                showError(errorMessage);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        // Permite login com Enter
-        document.getElementById('password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleAuth();
-            }
-            
-        window.forgotPasswordPrompt = async () => {
-        const email = document.getElementById('email').value.trim();
-        if (!email) {
-            showError("Digite seu e-mail para recuperar a senha");
-            return;
-        }
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("📧 Email de redefinição enviado! Verifique sua caixa de entrada.");
-        } catch (error) {
-            console.error("Erro ao enviar email de redefinição:", error);
-            showError("Erro ao enviar email. Verifique se o e-mail está correto.");
-        }
-    };       
-    </script>
 </body>
 </html>
-
-
-
