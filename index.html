@@ -184,21 +184,6 @@
                 console.error('❌ Erro ao carregar:', error);
             }
         }
-
-        function updatePremiumUI() {
-            const btn = document.getElementById('premiumBtn');
-            if (!btn) return;
-
-            if (state.isPremium) {
-                btn.textContent = '✅ Premium Ativo';
-                btn.disabled = true;
-                btn.className = 'btn btn-success';
-            } else {
-                btn.textContent = '🚀 Premium R$ 9,90/mês';
-                btn.disabled = false;
-                btn.className = 'btn btn-warning';
-            }
-        }
             </script>
     </body>
 </html>

@@ -788,21 +788,49 @@ async function checkPaymentStatus() {
         const data = await response.json();
 
         if (data.status === 'approved') {
+            // Pagamento aprovado → habilita premium
             state.isPremium = true;
             state.paymentId = paymentId;
             await window.saveToFirebase();
-            updatePremiumUI();
+            updatePremiumUI(); // <- função que mostra recursos premium
             showToast('✅ Premium ativado permanentemente!', 'success');
         } else {
+            // Pagamento não concluído → mantém sem premium
             state.isPremium = false;
+            updatePremiumUI(); // <- garante que premium fique desativado
             showToast(`❌ Pagamento não concluído (${data.status}). Verifique seu pagamento.`, 'error');
         }
     } catch (error) {
         console.error('❌ Erro ao verificar pagamento:', error);
         state.isPremium = false;
+        updatePremiumUI();
         showToast('Erro de verificação de pagamento', 'error');
     }
 }
+
+function updatePremiumUI() {
+    // Atualiza elementos premium
+    const premiumElements = document.querySelectorAll('.premium-feature');
+    premiumElements.forEach(el => {
+        el.style.display = state.isPremium ? 'block' : 'none';
+    });
+
+    // Atualiza botão Premium
+    const btn = document.getElementById('premiumBtn');
+    if (btn) {
+        if (state.isPremium) {
+            btn.textContent = '✅ Premium Ativo';
+            btn.disabled = true;
+            btn.className = 'btn btn-success';
+        } else {
+            btn.textContent = '🚀 Premium R$ 9,90/mês';
+            btn.disabled = false;
+            btn.className = 'btn btn-warning';
+        }
+    }
+}
+
+
 
 window.addEventListener('load', checkPaymentStatus);
 
