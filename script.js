@@ -721,7 +721,7 @@ window.buyPremium = async function () {
     try {
         const email = window.auth ? window.auth.currentUser.email : "user@example.com";
         const origin = window.location.origin;
-        const response = await fetch(`https://us-central1-mmrpages-controle-financeiro.cloudfunctions.net/createPreference?email=${encodeURIComponent(email)}&origin=${encodeURIComponent(origin)}`);
+        const response = await fetch(`http://127.0.0.1:5001/mmrpages-controle-financeiro/us-central1/createPreference?email=${encodeURIComponent(email)}&origin=${encodeURIComponent(origin)}`);
         const data = await response.json();
 
         if (data.init_point) {
@@ -805,6 +805,7 @@ function updatePremiumUI() {
 
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
