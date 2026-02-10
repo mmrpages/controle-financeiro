@@ -809,6 +809,8 @@ async function checkPaymentStatus() {
 }
 
 function updatePremiumUI() {
+    console.log("🔎 Status Premium:", state.isPremium);
+
     // Atualiza elementos premium
     const premiumElements = document.querySelectorAll('.premium-feature');
     premiumElements.forEach(el => {
@@ -818,7 +820,7 @@ function updatePremiumUI() {
     // Atualiza botão Premium
     const btn = document.getElementById('premiumBtn');
     if (btn) {
-        if (state.isPremium) {
+        if (state.isPremium === true) {
             btn.textContent = '✅ Premium Ativo';
             btn.disabled = true;
             btn.className = 'btn btn-success';
@@ -829,6 +831,7 @@ function updatePremiumUI() {
         }
     }
 }
+
 
 
 
