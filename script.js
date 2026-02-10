@@ -711,8 +711,8 @@ if (document.readyState === 'loading') {
 }
 
 // ===== PAGAMENTO PREMIUM MERCADO PAGO =====
-const MP_PUBLIC_KEY = 'APP_USR-8e8386f1-3c48-4d9d-8b47-5e1234567890';
-const MP_ACCESS_TOKEN = 'TEST-8e8386f14a3c484d8b475e1234567890123456';
+const MP_PUBLIC_KEY = 'APP_USR-4ed31df5-50ce-4d59-b70b-01a3882649ab';
+const MP_ACCESS_TOKEN = 'APP_USR-8287383576240365-020919-ff2f173f0d9621e5e0ff2059b1c4bcb3-3193873266';
 
 const mp = new MercadoPago(MP_PUBLIC_KEY);
 let isPremium = false;
