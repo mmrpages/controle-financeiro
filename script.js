@@ -714,6 +714,8 @@ window.buyPremium = async function () {
         const response = await fetch(`https://createpreference-a3w2rajv7a-uc.a.run.app?email=${encodeURIComponent(email)}&origin=${encodeURIComponent(origin)}`);
         const data = await response.json();
 
+        console.log("Resposta da função:", data);
+
         if (data.init_point) {
             window.open(data.init_point, "_blank");
             setTimeout(() => {
@@ -795,6 +797,7 @@ function updatePremiumUI() {
 
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
