@@ -715,6 +715,8 @@ window.buyPremium = async function () {
         const data = await response.json();
 
         console.log("Resposta da função:", data);
+        res.set("Access-Control-Allow-Origin", corsOptions.origin);
+        res.json(data);
 
         if (data.init_point) {
             window.open(data.init_point, "_blank");
@@ -797,6 +799,7 @@ function updatePremiumUI() {
 
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
