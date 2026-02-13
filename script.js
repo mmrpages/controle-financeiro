@@ -818,7 +818,9 @@ async function checarPagamento(paymentId) {
     if (data.status === "approved") {
       // Se pago → faz A
       console.log("Pagamento aprovado!");
-      //fazA();
+      state.isPremium = true;
+      updatePremiumUI();
+        
     } else {
       // Se não pago → faz B
       console.log("Pagamento não aprovado. Status:", data.status);
@@ -835,6 +837,7 @@ async function checarPagamento(paymentId) {
 window.addEventListener('load', checkPaymentStatus);
 
 btnElement.addEventListener('click', handleButtonClick);
+
 
 
 
