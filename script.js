@@ -793,7 +793,33 @@ function updatePremiumUI() {
     }
 }
 
+async function checarPagamento(paymentId) {
+  showLoading();
+  try {
+    const response = await fetch(
+      `https://verificarpagamento-a3w2rajv7a-uc.a.run.app?paymentId=${encodeURIComponent(paymentId)}`
+    );
+    const data = await response.json();
+
+    if (data.status === "approved") {
+      // Se pago → faz A
+      console.log("Pagamento aprovado!");
+      //fazA();
+    } else {
+      // Se não pago → faz B
+      console.log("Pagamento não aprovado. Status:", data.status);
+      //fazB();
+    }
+  } catch (error) {
+    console.error("Erro ao verificar pagamento:", error);
+    showToast("Erro de conexão", "error");
+  } finally {
+    hideLoading();
+  }
+}
+
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
