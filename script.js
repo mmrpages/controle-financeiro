@@ -1,6 +1,25 @@
 /**
  * SISTEMA FINANCEIRO 2026 - VERSÃO OTIMIZADA
  * Melhorias: Validação, Debounce, Tratamento de Erros, Performance
+ * 
+ * VALIDAÇÃO PREMIUM APRIMORADA (v2.0):
+ * =====================================
+ * - Verificação de paymentId cadastrado no Firebase (coleção 'payments')
+ * - Validação de status e ativação do pagamento
+ * - Verificação automática ao carregar dados do usuário
+ * - Funções auxiliares para gerenciamento e debug
+ * - Verificação periódica opcional (comentada por padrão)
+ * 
+ * ESTRUTURA DA COLEÇÃO 'payments':
+ * {
+ *   paymentId: string (ID do documento)
+ *   status: "approved" | "pending" | "cancelled"
+ *   active: boolean
+ *   userId: string (opcional)
+ *   email: string
+ *   createdAt: timestamp
+ *   updatedAt: timestamp
+ * }
  */
 
 window.handleBlur = handleBlur;
@@ -86,7 +105,7 @@ window.showToast = (message, type = 'info') => {
 
 // ===== SINCRONIZAÇÃO COM FIREBASE =====
 
-window.updateStateFromFirebase = (newData) => {
+window.updateStateFromFirebase = async (newData) => {
     console.log('🔄 updateStateFromFirebase chamado');
     console.log('📦 Dados recebidos:', newData);
 
@@ -97,7 +116,10 @@ window.updateStateFromFirebase = (newData) => {
             presets: newData?.presets || state.presets,
             categories: Array.isArray(newData?.categories) ? newData.categories : [],
             data: Array.isArray(newData?.data) ? newData.data : state.data,
-            settings: newData?.settings || { showTotals: {} }
+            settings: newData?.settings || { showTotals: {} },
+            isPremium: newData?.isPremium || false,
+            paymentId: newData?.paymentId || null,
+            premiumActivatedAt: newData?.premiumActivatedAt || null
         };
 
         console.log('✅ State atualizado:', state);
@@ -106,6 +128,9 @@ window.updateStateFromFirebase = (newData) => {
         build();
 
         console.log('✅ build() concluído');
+
+        // Valida o status premium após carregar os dados
+        await validatePremiumStatus();
 
         window.showToast?.('Dados carregados com sucesso!', 'success');
     } catch (error) {
@@ -733,6 +758,94 @@ window.buyPremium = async function () {
     }
 };
 
+// ===== VERIFICAÇÃO DE PREMIUM NO FIREBASE =====
+
+/**
+ * Verifica se o paymentId está cadastrado na coleção 'payments' do Firebase
+ * @param {string} paymentId - ID do pagamento a ser verificado
+ * @returns {Promise<boolean>} - true se o paymentId existir e for válido
+ */
+async function verifyPaymentIdInFirebase(paymentId) {
+    if (!paymentId) {
+        console.error("❌ PaymentId não fornecido para verificação");
+        return false;
+    }
+
+    try {
+        console.log("🔍 Verificando paymentId no Firebase:", paymentId);
+
+        // Verifica se Firebase está inicializado
+        const { doc, getDoc } = window.fbOps || {};
+        if (!doc || !getDoc || !window.db) {
+            console.error("❌ Firebase não inicializado corretamente");
+            return false;
+        }
+
+        // Busca o documento na coleção 'payments'
+        const paymentRef = doc(window.db, "payments", paymentId);
+        const paymentDoc = await getDoc(paymentRef);
+
+        if (paymentDoc.exists()) {
+            const paymentData = paymentDoc.data();
+            console.log("✅ PaymentId encontrado no Firebase:", paymentData);
+
+            // Verifica se o pagamento está ativo e aprovado
+            if (paymentData.status === "approved" && paymentData.active === true) {
+                console.log("✅ Pagamento válido e ativo");
+                return true;
+            } else {
+                console.warn("⚠️ Pagamento encontrado mas não está ativo ou aprovado:", paymentData);
+                return false;
+            }
+        } else {
+            console.error("❌ PaymentId não encontrado na coleção 'payments'");
+            return false;
+        }
+    } catch (error) {
+        console.error("❌ Erro ao verificar paymentId no Firebase:", error);
+        return false;
+    }
+}
+
+/**
+ * Valida o status premium do usuário ao carregar a página
+ * Verifica se o paymentId salvo no state ainda é válido no Firebase
+ */
+async function validatePremiumStatus() {
+    if (!state.isPremium || !state.paymentId) {
+        console.log("ℹ️ Usuário não é premium ou não possui paymentId");
+        state.isPremium = false;
+        updatePremiumUI();
+        return;
+    }
+
+    try {
+        console.log("🔍 Validando status premium existente...");
+        showLoading();
+
+        const isValid = await verifyPaymentIdInFirebase(state.paymentId);
+
+        if (isValid) {
+            console.log("✅ Status premium validado com sucesso");
+            state.isPremium = true;
+            updatePremiumUI();
+        } else {
+            console.warn("⚠️ PaymentId não é mais válido - removendo status premium");
+            state.isPremium = false;
+            state.paymentId = null;
+            await window.saveToFirebase();
+            updatePremiumUI();
+            showToast("⚠️ Sua assinatura premium expirou ou foi cancelada", "warning");
+        }
+    } catch (error) {
+        console.error("❌ Erro ao validar status premium:", error);
+        // Em caso de erro, mantém o status atual para não perder dados
+        updatePremiumUI();
+    } finally {
+        hideLoading();
+    }
+}
+
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentId = urlParams.get('payment_id') || urlParams.get('collection_id');
@@ -743,6 +856,8 @@ async function checkPaymentStatus() {
     }
 
     try {
+        showLoading();
+        
         // Chama sua função backend (Firebase Functions)
         const response = await fetch(`https://checkpayment-a3w2rajv7a-uc.a.run.app?paymentId=${paymentId}`);
         const result = await response.json();
@@ -750,11 +865,22 @@ async function checkPaymentStatus() {
         console.log("🔎 Resultado do backend:", result);
 
         if (result.status === "approved") {
-            state.isPremium = true;
-            state.paymentId = paymentId;
-            await window.saveToFirebase();
-            updatePremiumUI();
-            showToast("✅ Premium ativado permanentemente!", "success");
+            // Verifica se o paymentId está cadastrado no Firebase
+            const isValidInFirebase = await verifyPaymentIdInFirebase(paymentId);
+            
+            if (isValidInFirebase) {
+                state.isPremium = true;
+                state.paymentId = paymentId;
+                state.premiumActivatedAt = new Date().toISOString();
+                await window.saveToFirebase();
+                updatePremiumUI();
+                showToast("✅ Premium ativado permanentemente!", "success");
+            } else {
+                console.error("❌ PaymentId aprovado mas não encontrado no Firebase");
+                state.isPremium = false;
+                updatePremiumUI();
+                showToast("❌ Erro: Pagamento não registrado no sistema", "error");
+            }
         } else {
             state.isPremium = false;
             updatePremiumUI();
@@ -765,12 +891,15 @@ async function checkPaymentStatus() {
         state.isPremium = false;
         updatePremiumUI();
         showToast("Erro de verificação de pagamento", "error");
+    } finally {
+        hideLoading();
     }
 }
 
 
 function updatePremiumUI() {
     console.log("🔎 Status Premium:", state.isPremium);
+    console.log("🆔 PaymentId:", state.paymentId);
 
     // Atualiza elementos premium
     const premiumElements = document.querySelectorAll('.premium-feature');
@@ -785,22 +914,115 @@ function updatePremiumUI() {
             btn.textContent = '✅ Premium Ativo';
             btn.disabled = true;
             btn.className = 'btn btn-success';
+            
+            // Adiciona tooltip com informações do pagamento
+            if (state.paymentId) {
+                btn.title = `ID do Pagamento: ${state.paymentId}\nAtivado em: ${state.premiumActivatedAt ? new Date(state.premiumActivatedAt).toLocaleString('pt-BR') : 'N/A'}`;
+            }
         } else {
             btn.textContent = '🚀 Premium R$ 9,90/mês';
             btn.disabled = false;
             btn.className = 'btn btn-warning';
+            btn.title = 'Clique para assinar o plano Premium';
         }
+    }
+
+    // Atualiza badge de status premium (se existir)
+    const premiumBadge = document.getElementById('premiumBadge');
+    if (premiumBadge) {
+        premiumBadge.style.display = state.isPremium ? 'inline-block' : 'none';
     }
 }
 
 window.addEventListener('load', checkPaymentStatus);
 
+// ===== VERIFICAÇÃO PERIÓDICA DE STATUS PREMIUM (OPCIONAL) =====
 
+/**
+ * Verifica periodicamente se o status premium ainda é válido
+ * Útil para detectar cancelamentos ou expirações
+ * @param {number} intervalMinutes - Intervalo em minutos entre verificações (padrão: 30)
+ */
+function startPeriodicPremiumCheck(intervalMinutes = 30) {
+    // Só inicia verificação periódica se o usuário for premium
+    if (!state.isPremium) {
+        console.log("ℹ️ Verificação periódica não iniciada - usuário não é premium");
+        return;
+    }
 
+    const intervalMs = intervalMinutes * 60 * 1000;
+    console.log(`🔄 Iniciando verificação periódica de status premium (a cada ${intervalMinutes} minutos)`);
 
+    setInterval(async () => {
+        console.log("⏰ Executando verificação periódica de status premium...");
+        await validatePremiumStatus();
+    }, intervalMs);
+}
 
+// Inicia verificação periódica após 5 segundos do carregamento da página
+// setTimeout(() => startPeriodicPremiumCheck(30), 5000);
 
+// ===== FUNÇÕES AUXILIARES PARA GERENCIAMENTO PREMIUM =====
 
+/**
+ * Cancela manualmente o status premium (para testes ou administração)
+ */
+window.cancelPremium = async function() {
+    if (!confirm('Tem certeza que deseja cancelar o status Premium?')) {
+        return;
+    }
 
+    try {
+        showLoading();
+        console.log("🚫 Cancelando status premium...");
+        
+        state.isPremium = false;
+        state.paymentId = null;
+        state.premiumActivatedAt = null;
+        
+        await window.saveToFirebase();
+        updatePremiumUI();
+        
+        showToast("Status Premium cancelado", "info");
+    } catch (error) {
+        console.error("❌ Erro ao cancelar premium:", error);
+        showToast("Erro ao cancelar Premium", "error");
+    } finally {
+        hideLoading();
+    }
+};
 
+/**
+ * Verifica e exibe informações detalhadas do status premium
+ */
+window.showPremiumInfo = async function() {
+    if (!state.isPremium) {
+        alert('Você não possui assinatura Premium ativa.');
+        return;
+    }
 
+    const info = [
+        '=== INFORMAÇÕES PREMIUM ===',
+        `Status: ${state.isPremium ? 'Ativo ✅' : 'Inativo ❌'}`,
+        `Payment ID: ${state.paymentId || 'N/A'}`,
+        `Ativado em: ${state.premiumActivatedAt ? new Date(state.premiumActivatedAt).toLocaleString('pt-BR') : 'N/A'}`,
+        '',
+        'Validando no Firebase...'
+    ].join('\n');
+
+    alert(info);
+
+    // Valida em tempo real
+    const isValid = await verifyPaymentIdInFirebase(state.paymentId);
+    
+    const validationInfo = [
+        '=== INFORMAÇÕES PREMIUM ===',
+        `Status: ${state.isPremium ? 'Ativo ✅' : 'Inativo ❌'}`,
+        `Payment ID: ${state.paymentId || 'N/A'}`,
+        `Ativado em: ${state.premiumActivatedAt ? new Date(state.premiumActivatedAt).toLocaleString('pt-BR') : 'N/A'}`,
+        '',
+        `Verificação Firebase: ${isValid ? 'Válido ✅' : 'Inválido ❌'}`
+    ].join('\n');
+
+    alert(validationInfo);
+};
