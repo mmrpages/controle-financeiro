@@ -815,7 +815,7 @@ async function checarPagamento(paymentId) {
     );
     const data = await response.json();
 
-    if (data.status === "approved") {
+    if (state.isPremium === false || data.status === "approved") {
       // Se pago → faz A
       console.log("Pagamento aprovado!");
       state.isPremium = true;
@@ -825,7 +825,7 @@ async function checarPagamento(paymentId) {
              
     } else {
       // Se não pago → faz B
-      console.log("Pagamento não aprovado. Status:", data.status);
+      console.log("Usuario já premium ou o Pagamento não foi aprovado. Status:", data.status);
       //fazB();
     }
   } catch (error) {
@@ -839,6 +839,7 @@ async function checarPagamento(paymentId) {
 window.addEventListener('load', checkPaymentStatus);
 
 btnElement.addEventListener('click', handleButtonClick);
+
 
 
 
