@@ -793,6 +793,20 @@ function updatePremiumUI() {
     }
 }
 
+const inputElement = document.getElementById('paymentInput');
+const btnElement = document.getElementById('checkButton');
+
+// Função que serve como "ponte"
+function handleButtonClick() {
+    const paymentId = inputElement.value.trim(); // Pega o valor e remove espaços extras
+
+    if (paymentId) {
+        checarPagamento(paymentId); // Chama a sua função original do print
+    } else {
+        alert("Por favor, insira um ID de pagamento válido.");
+    }
+}
+
 async function checarPagamento(paymentId) {
   showLoading();
   try {
@@ -819,6 +833,7 @@ async function checarPagamento(paymentId) {
 }
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
