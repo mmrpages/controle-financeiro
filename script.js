@@ -834,6 +834,9 @@ async function checarPagamento(paymentId) {
 
 window.addEventListener('load', checkPaymentStatus);
 
+btnElement.addEventListener('click', handleButtonClick);
+
+
 
 
 
