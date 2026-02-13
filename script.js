@@ -366,7 +366,7 @@ window.debouncedCalculate = debouncedCalculate;
 // ===== MODAIS =====
 
 window.addExpense = () => {
-    if (!state.isPremium && (!state.paymentId || state.paymentId.trim() === "") && state.categories.length >= 3) {
+    if (!state.isPremium && state.categories.length >= 3) {
         showToast('🚫 Versão gratuita permite até 3 despesas. Faça upgrade para Premium!', 'warning');
         return;
     }
@@ -460,14 +460,10 @@ async function saveExpenseData() {
         return;
     }
 
-    if (
-    (!state.isPremium || !state.paymentId || state.paymentId.trim() === "") 
-    && !currentEditId 
-    && state.categories.length >= 3
-) {
-    window.showToast('🚫 Limite de 3 despesas na versão gratuita. Faça upgrade para Premium!', 'warning');
-    return;
-}
+    if (!state.isPremium && !currentEditId && state.categories.length >= 3) {
+        window.showToast?.('🚫 Limite de 3 despesas na versão gratuita. Faça upgrade para Premium!', 'warning');
+        return;
+    }
 
     try {
         window.showLoading?.();
@@ -536,7 +532,7 @@ window.resetAll = async () => {
 };
 
 window.clearMonth = async (monthIndex) => {
-    if (!state.isPremium || !state.paymentId || state.paymentId.trim() === "") {
+    if (!state.isPremium) {
         showToast('🔒 Premium necessário!', 'warning');
         return;
     }
@@ -773,33 +769,31 @@ async function checkPaymentStatus() {
 }
 
 
-function updatePremiumUI(state) {
-    
-    // Analisa elementos premium
+function updatePremiumUI() {
+    console.log("🔎 Status Premium:", state.isPremium);
+
+    // Atualiza elementos premium
     const premiumElements = document.querySelectorAll('.premium-feature');
     premiumElements.forEach(el => {
-        el.style.display = state.isPremium && state.paymentId ? 'block' : 'none';
+        el.style.display = state.isPremium ? 'block' : 'none';
     });
 
-    // Atualiza botão premium
+    // Atualiza botão Premium
     const btn = document.getElementById('premiumBtn');
     if (btn) {
-        if (state.isPremium && state.paymentId) {
-            btn.textContent = 'Premium ✓';
+        if (state.isPremium === true) {
+            btn.textContent = '✅ Premium Ativo';
+            btn.disabled = true;
             btn.className = 'btn btn-success';
         } else {
-            btn.textContent = 'Premium R$ 9,90/mês';
-            btn.className = 'btn btn-warning';
+            btn.textContent = '🚀 Premium R$ 9,90/mês';
             btn.disabled = false;
+            btn.className = 'btn btn-warning';
         }
     }
 }
 
 window.addEventListener('load', checkPaymentStatus);
-
-
-
-
 
 
 
