@@ -711,18 +711,17 @@ window.buyPremium = async function () {
     try {
         const email = window.auth ? window.auth.currentUser.email : "user@example.com";
         const origin = window.location.origin;
-        const response = await fetch(`https://createpreference-a3w2rajv7a-uc.a.run.app?email=${encodeURIComponent(email)}&origin=${encodeURIComponent(origin)}`);
+
+        const response = await fetch(
+            `https://createpreference-a3w2rajv7a-uc.a.run.app?email=${encodeURIComponent(email)}&origin=${encodeURIComponent(origin)}`
+        );
         const data = await response.json();
 
         console.log("Resposta da função:", data);
-        res.set("Access-Control-Allow-Origin", corsOptions.origin);
-        res.json(data);
 
         if (data.init_point) {
-            window.open(data.init_point, "_blank");
-            setTimeout(() => {
-                window.location.href = window.location.origin + "/controle-financeiro/index.html?status=waiting";
-            }, 1000);
+            // Redireciona direto para o checkout
+            window.location.href = data.init_point;
         } else {
             showToast("Erro ao criar pagamento", "error");
         }
@@ -733,7 +732,6 @@ window.buyPremium = async function () {
         hideLoading();
     }
 };
-
 
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -799,6 +797,7 @@ function updatePremiumUI() {
 
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
