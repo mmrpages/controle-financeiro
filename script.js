@@ -769,34 +769,30 @@ async function checkPaymentStatus() {
 }
 
 
-function updatePremiumUI() {
-    console.log("🔎 Status Premium:", state.isPremium);
-
-    // Atualiza elementos premium
+updatePremiumUI(state) {
+    
+    // Analisa elementos premium
     const premiumElements = document.querySelectorAll('.premium-feature');
     premiumElements.forEach(el => {
-        el.style.display = state.isPremium ? 'block' : 'none';
+        el.style.display = state.isPremium && state.paymentId ? 'block' : 'none';
     });
 
-    // Atualiza botão Premium
+    // Atualiza botão premium
     const btn = document.getElementById('premiumBtn');
     if (btn) {
-        if (state.isPremium === true) {
-            btn.textContent = '✅ Premium Ativo';
-            btn.disabled = true;
+        if (state.isPremium && state.paymentId) {
+            btn.textContent = 'Premium ✓';
             btn.className = 'btn btn-success';
         } else {
-            btn.textContent = '🚀 Premium R$ 9,90/mês';
-            btn.disabled = false;
+            btn.textContent = 'Premium R$ 9,90/mês';
             btn.className = 'btn btn-warning';
+            btn.disabled = false;
         }
     }
 }
 
-
-
-
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
