@@ -366,7 +366,7 @@ window.debouncedCalculate = debouncedCalculate;
 // ===== MODAIS =====
 
 window.addExpense = () => {
-    if (!state.isPremium & !state.paymentId & state.categories.length >= 3) {
+    if (!state.isPremium && (!state.paymentId || state.paymentId.trim() === "") && state.categories.length >= 3) {
         showToast('🚫 Versão gratuita permite até 3 despesas. Faça upgrade para Premium!', 'warning');
         return;
     }
@@ -460,10 +460,14 @@ async function saveExpenseData() {
         return;
     }
 
-    if (!state.isPremium & !state.paymentId && !currentEditId && state.categories.length >= 3) {
-        window.showToast?.('🚫 Limite de 3 despesas na versão gratuita. Faça upgrade para Premium!', 'warning');
-        return;
-    }
+    if (
+    (!state.isPremium || !state.paymentId || state.paymentId.trim() === "") 
+    && !currentEditId 
+    && state.categories.length >= 3
+) {
+    window.showToast('🚫 Limite de 3 despesas na versão gratuita. Faça upgrade para Premium!', 'warning');
+    return;
+}
 
     try {
         window.showLoading?.();
@@ -532,7 +536,7 @@ window.resetAll = async () => {
 };
 
 window.clearMonth = async (monthIndex) => {
-    if (!state.isPremium & !state.paymentId) {
+    if (!state.isPremium || !state.paymentId || state.paymentId.trim() === "") {
         showToast('🔒 Premium necessário!', 'warning');
         return;
     }
@@ -792,6 +796,7 @@ function updatePremiumUI(state) {
 }
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
