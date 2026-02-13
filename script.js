@@ -819,8 +819,9 @@ async function checarPagamento(paymentId) {
       // Se pago → faz A
       console.log("Pagamento aprovado!");
       state.isPremium = true;
+    await window.saveToFirebase();
       updatePremiumUI();
-        
+             
     } else {
       // Se não pago → faz B
       console.log("Pagamento não aprovado. Status:", data.status);
@@ -837,6 +838,7 @@ async function checarPagamento(paymentId) {
 window.addEventListener('load', checkPaymentStatus);
 
 btnElement.addEventListener('click', handleButtonClick);
+
 
 
 
