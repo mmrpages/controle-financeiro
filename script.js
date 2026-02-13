@@ -769,7 +769,7 @@ async function checkPaymentStatus() {
 }
 
 
-updatePremiumUI(state) {
+function updatePremiumUI(state) {
     
     // Analisa elementos premium
     const premiumElements = document.querySelectorAll('.premium-feature');
@@ -792,6 +792,7 @@ updatePremiumUI(state) {
 }
 
 window.addEventListener('load', checkPaymentStatus);
+
 
 
 
