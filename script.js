@@ -395,7 +395,7 @@ window.deleteColumn = async (id) => {
             console.error('Erro ao excluir categoria:', error);
             window.showToast?.('Erro ao excluir categoria', 'error');
         } finally {
-            window.hideLoading?.();
+            window.?.();
         }
     }
 };
@@ -491,7 +491,7 @@ async function saveExpenseData() {
         console.error('❌ Erro ao salvar despesa:', error);
         window.showToast?.('Erro ao salvar despesa', 'error');
     } finally {
-        window.hideLoading?.();
+        window.?.();
     }
 }
 
@@ -526,7 +526,7 @@ window.resetAll = async () => {
             console.error('Erro ao resetar:', error);
             window.showToast?.('Erro ao resetar dados', 'error');
         } finally {
-            window.hideLoading?.();
+            window.?.();
         }
     }
 };
@@ -820,12 +820,13 @@ async function checarPagamento(paymentId) {
       console.log("Pagamento aprovado!");
       state.isPremium = true;
       state.paymentId = paymentId;
+    
     await window.saveToFirebase();
       updatePremiumUI();
              
     } else {
       // Se não pago → faz B
-      console.log("Usuario já premium ou o Pagamento não foi aprovado. Status:", data.status);
+      console.log("Usuario já premium ou o Pagamento não foi aprovado.");
       //fazB();
     }
   } catch (error) {
@@ -839,6 +840,7 @@ async function checarPagamento(paymentId) {
 window.addEventListener('load', checkPaymentStatus);
 
 btnElement.addEventListener('click', handleButtonClick);
+
 
 
 
